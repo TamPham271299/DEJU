@@ -158,7 +158,7 @@ process_IE_J_count <- function(featureCounts_o, SJ_database) {
               'IE_J_annot'=IE_J_annot))
 }
 
-DEU_analysis <- function(r_count, annot, group, design, mode) {
+DEU_analysis <- function(r_count, annot, group, design, mode, REF) {
   
   message("Constructing DGElist object ...")  
   y <- DGEList(counts=r_count, genes=annot, group=group)
@@ -353,7 +353,7 @@ if (mode == "simulation") {
     message("Starting DEU analysis for DEU-edgeR ...")
     DEU_fit <- DEU_analysis(E$E_count,
                             E$E_annot,
-                            mat$group, mat$design, mode)
+                            mat$group, mat$design, mode, REF)
 
     message("Combining internal exon and junction read count matrix ...")  
     IE_J <- process_IE_J_count(featureCounts_o, SJ_database)
@@ -361,7 +361,7 @@ if (mode == "simulation") {
     message("Starting DEJU analysis for DEJU-edgeR ...")
     DEJU_fit <- DEU_analysis(IE_J$IE_J_count,
                              IE_J$IE_J_annot,
-                             mat$group, mat$design, mode)
+                             mat$group, mat$design, mode, REF)
 
     setwd(DEU_analysis_o)
     message("Running diffSpliceDGE for DEU-edgeR ...")
@@ -415,7 +415,7 @@ if (mode == "simulation") {
   message("Start DEU analysis for DEU-edgeR for ...")
   DEU_fit <- DEU_analysis(E$E_count,
                           E$E_annot,
-                          mat$group, mat$design, mode)
+                          mat$group, mat$design, mode, REF)
  
   message("Combining internal exon and junction read count matrix ...")  
   IE_J <- process_IE_J_count(featureCounts_o, SJ_database)
@@ -423,7 +423,7 @@ if (mode == "simulation") {
   message("Start DEJU analysis for DEU-edgeR ...")
   DEJU_fit <- DEU_analysis(IE_J$IE_J_count,
                            IE_J$IE_J_annot,
-                           mat$group, mat$design, mode)
+                           mat$group, mat$design, mode, REF)
   
   pair <- strsplit(pair, ",")[[1]]
   for (p in pair) {
