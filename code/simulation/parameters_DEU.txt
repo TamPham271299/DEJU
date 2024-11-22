@@ -1,0 +1,7 @@
+scenario	libs	rlen	fc
+balanced	3	75	3
+balanced	5	75	3
+balanced	10	75	3
+unbalanced	3	75	3
+unbalanced	5	75	3
+unbalanced	10	75	3
