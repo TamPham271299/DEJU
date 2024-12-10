@@ -1,14 +1,14 @@
 # [Differential Exon-Junction Usage (DEJU)]
 
-This is the repository for the code used to perform simulation and case-study DEU analysis and generate figures for the following paper titled "Incorporating exon-exon junction reads enhances differential splicing detection". 
+This is the repository for the code used to perform analysis and generate figures for the following paper titled "Incorporating exon-exon junction reads enhances differential splicing detection". 
 
 ## Introduction
 
-The paper introduce a DEJU analysis workflow implementing a STAR-Rsubread-edgeR-limma framework to analyze DEJU and detect differential splicing between two groups of conditions. Here is a schematic presentation of our proposed DEJU workflow.
+The paper introduced a DEJU analysis workflow implementing a STAR-Rsubread-edgeR-limma framework to analyze DEJU and detect differential splicing between two groups of conditions. Here is a schematic presentation of our proposed DEJU workflow.
 
 [Figure of DEJU workflow]
 
-The paper also benchmarked the DEJU analysis workflow (DEJU-edgeR, DEJU-limma) against the existing DEU analysis workflow (DEU-edgeR, DEU-limma) and other popular methods (DEXSeq, JunctionSeq) based on the simulation RNA-seq datasets.
+The paper also benchmarked the DEJU analysis workflow (DEJU-edgeR, DEJU-limma) against the existing DEU analysis workflow (DEU-edgeR, DEU-limma) and other popular tools (DEXSeq, JunctionSeq) based on simulated RNA-seq datasets. We also performed DEU analysis on RNA-sequencing experiments of [NCBI GEO database (GSE227748)](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE227748) using our proposed method and other DEU analysis pipelines benchmarked in the study.
 
 ## Citation
 
@@ -32,6 +32,6 @@ DEJU/
 │   ├── case_study    # Main script to analyze case-study data
 │   └── analysis      # Main script to perform overall analysis, create figures for the paper
 ├── tools/
-│   └── Subread_to_DEXSeq/    # External script written by ... to generate exon counts for DEXSeq
+│   └── Subread_to_DEXSeq/    # External scripts to generate exon counts for DEXSeq
 └── README.md                  # Main documentation for the repository
 
