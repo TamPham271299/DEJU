@@ -7,7 +7,6 @@ including:
 
 ## Directory structure
 
-```plaintext
 simulation/
 ├── customized_transcriptome.R        # Script to generate a transcriptome of interest
 ├── customized_transcriptome.sh        # Main script to generate a transcriptome of interest
