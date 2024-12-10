@@ -41,7 +41,7 @@ To run the simulation pipeline, do:
 Please run step 1-3 prior steps 4-5 which can be run independently. 
 Please run step 6 after step 4 is done.
 
-Computing time per step
+Computing time per step **
 1 - approximately 30 seconds
 2 - approximately 1 hour
 3 - approximately 30 seconds
@@ -49,8 +49,9 @@ Computing time per step
 5 - approximately 1 day*
 6 - approximately 6 hours*
 
-*: do note that these steps use parallel computing in several parts of the
+*: note that these steps use parallel computing in several parts of the
     scripts, please adjust accordingly.
+**: note that the maximum computing time for 1 simulation.
 
 For 1 simulation (balanced_10_75_3)
 run_00 (30s)
