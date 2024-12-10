@@ -24,10 +24,10 @@ DEJU/
 │   ├── duplicated_sequences.tsv/    # duplicate sequences discarded for the simulation process
 │   └── processed/        # Data after cleaning and preprocessing
 ├── code/
-│   ├── annotation_dl    # Script to prepare reference genome datasets of mm39 (GTF, FASTA, SAF...) 
+│   ├── annotation_dl    # Script to prepare reference genome datasets of mm39 (GTF, FASTA, exon-junction SAF...) 
 │   ├── alignment      # Script to map reads to reference genome mm39
 │   ├── DEU            # Script to quantify exon-junction counts, and detect DEU genes by 6 benchmarked methods
-│   ├── simulation    # Main script to generate customized transcriptome and analyze simulation data
+│   ├── simulation    # Main script to generate customized transcriptome, generate and analyze simulation data
 │   ├── fastq_dl      # Script to download FASTQ files
 │   ├── case_study    # Main script to analyze case-study data
 │   └── analysis      # Main script to perform overall analysis, create figures for the paper
