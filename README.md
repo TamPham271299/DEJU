@@ -1,36 +1,37 @@
 # [Differential Exon-Junction Usage (DEJU)]
 
-This is the repository for the code used to perform analysis and generate figures for the following paper titled "Incorporating exon-exon junction reads enhances differential splicing detection". The paper introduce a DEJU analysis workflow implementing a STAR-Rsubread-edgeR-limma framework to analyze DEJU and detect differential splicing between two groups of conditions. Here is a schematic presentation of our proposed DEJU workflow.
+This is the repository for the code used to perform simulation and case-study DEU analysis and generate figures for the following paper titled "Incorporating exon-exon junction reads enhances differential splicing detection". 
+
+## Introduction
+
+The paper introduce a DEJU analysis workflow implementing a STAR-Rsubread-edgeR-limma framework to analyze DEJU and detect differential splicing between two groups of conditions. Here is a schematic presentation of our proposed DEJU workflow.
 
 [Figure of DEJU workflow]
 
-## **Citation**
+The paper also benchmarked the DEJU analysis workflow (DEJU-edgeR, DEJU-limma) against the existing DEU analysis workflow (DEU-edgeR, DEU-limma) and other popular methods (DEXSeq, JunctionSeq) based on the simulation RNA-seq datasets.
+
+## Citation
 
 If you are using code or pipelines from this repository, please consider citing our associated article:
 
 Pham, M. T., Milevskiy, M. J. G., Visvader, J. E., Chen, Y. Incorporating exon-exon junction reads enhances differential splicing detection. ...
 
-## **Code** 
+## Repository Structure
 
-The directory contains codes used for the simulation and benchmarking procedure of 6 benchmarked DEU/DEJU pipelines including DEJU-edgeR, DEU-edgeR, DEJU-limma, DEU-limma, DEXSeq, and JunctionSeq.
-
-Overall, a standard DEU/DEJU analysis pipeline contains three main steps: Read alignment, exon-junction read quantification, and DEU/DEJU analysis.
-
-Codes for the read alignment step can be found in the alignment folder.
-
-Codes for the read quantification and DEU/DEJU analysis can be found in the DEU folder.
-
-## **Reference genome**
-
-## **Read alignment**
-
-## **DEU/DEJU analyses**
-
-## **Simulation**
-
-## **Case-study**
-
-
-
-## **Tools**
+```plaintext
+DEJU/
+├── annotation/
+│   ├── duplicated_sequences.tsv/    # duplicate sequences discarded for the simulation process
+│   └── processed/        # Data after cleaning and preprocessing
+├── code/
+│   ├── annotation_dl    # Script to prepare reference genome datasets of mm39 (GTF, FASTA, SAF...) 
+│   ├── alignment      # Script to map reads to reference genome mm39
+│   ├── DEU            # Script to quantify exon-junction counts, and detect DEU genes by 6 benchmarked methods
+│   ├── simulation    # Main script to generate customized transcriptome and analyze simulation data
+│   ├── fastq_dl      # Script to download FASTQ files
+│   ├── case_study    # Main script to analyze case-study data
+│   └── analysis      # Main script to perform overall analysis, create figures for the paper
+├── tools/
+│   └── Subread_to_DEXSeq/    # External script written by ... to generate exon counts for DEXSeq
+└── README.md                  # Main documentation for the repository
 
