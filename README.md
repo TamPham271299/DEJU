@@ -1,8 +1,8 @@
-# [Differential Exon-Junction Usage (DEJU)]
+# Differential Exon-Junction Usage (DEJU)
 
 This is the repository for the code used to perform analysis and generate figures for the following paper titled "Incorporating exon-exon junction reads enhances differential splicing detection". 
 
-## Introduction
+### Introduction
 
 The paper introduced a DEJU analysis workflow implementing a STAR-Rsubread-edgeR-limma framework to analyze DEJU and detect differential splicing between two groups of conditions. Here is a schematic presentation of our proposed DEJU workflow.
 
@@ -10,13 +10,13 @@ The paper introduced a DEJU analysis workflow implementing a STAR-Rsubread-edgeR
 
 The paper also benchmarked the DEJU analysis workflow (DEJU-edgeR, DEJU-limma) against the existing DEU analysis workflow (DEU-edgeR, DEU-limma) and other popular tools (DEXSeq, JunctionSeq) based on simulated RNA-seq datasets. We also performed DEU analysis on RNA-sequencing experiments of [NCBI GEO database (GSE227748)](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE227748) using our proposed method and other DEU analysis pipelines benchmarked in the study.
 
-## Citation
+### Citation
 
 If you are using code or pipelines from this repository, please consider citing our associated article:
 
 Pham, M. T., Milevskiy, M. J. G., Visvader, J. E., Chen, Y. Incorporating exon-exon junction reads enhances differential splicing detection. ...
 
-## Repository Structure
+### Repository Structure
 
 ```plaintext
 DEJU/
