@@ -8,9 +8,9 @@ cd ../../annotation
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M32/gencode.vM32.annotation.gtf.gz
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M32/gencode.vM32.primary_assembly.annotation.gtf.gz
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M32/GRCm39.primary_assembly.genome.fa.gz
-gunzip gencode.vM32.annotation.gtf.gz
-gunzip gencode.vM32.primary_assembly.annotation.gtf.gz
-gunzip GRCm39.primary_assembly.genome.fa.gz 
+gunzip -k gencode.vM32.annotation.gtf.gz
+gunzip -k gencode.vM32.primary_assembly.annotation.gtf.gz
+gunzip -k GRCm39.primary_assembly.genome.fa.gz 
 
 ### Download gene_info_GRCm39_M32_ensembl109.tsv
 
