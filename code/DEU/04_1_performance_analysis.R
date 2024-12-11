@@ -15,13 +15,6 @@ noOfSim <- as.integer(args[['noOfSim']])
 seed <- as.integer(args[['seed']])
 workers <- as.integer(args[['workers']])
 
-# DIR <- "/vast/projects/Spatial/tam/Differential_splicing/github/data/simulation/unbalanced_3_75_3/"
-# DEU_map <- "/vast/projects/Spatial/tam/Differential_splicing/github/data/simulation/customized_transcriptome/DEU_genes.info.tsv"
-# noOfSim <- 20
-# seed <- 2024
-# workers <- 90
-# fdr_cutoff <- 0.05
-
 simID <- paste0("S", 1:noOfSim)
 
 ### 00. Check parameters
@@ -131,10 +124,10 @@ bplapply(simID, FUN = function(i){
   map <- read.table(DEU_map, header=TRUE)
   
   ### Benchmarking results relative to splicing patterns
-  res_sp <- data.frame(matrix(ncol=11, nrow=0))
+  res_sp <- data.frame(matrix(ncol=10, nrow=0))
   colnames(res_sp) <- c("simID", "method", "splicing_pattern", 
                         "TP", "FP", "FN", "FDR", "FNR", 
-                        "Precision", "Sensitivity", "undefined")
+                        "Precision", "Sensitivity")
   
   r <- 1
   for (t in AP_type){
@@ -151,13 +144,11 @@ bplapply(simID, FUN = function(i){
       fp <- length(setdiff(pred_DEUs_sp, g))
       # genes in reference list but not in predicted list
       fn <- length(setdiff(g, pred_DEUs_sp))
-      # undefined genes (genes not simulated but detected)
-      undefined <- length(setdiff(pred_DEUs_sp, map$gene))
       FDR <- fp / (tp + fp)
       FNR <- fn / (tp + fn)
       Pre <- tp / (tp + fp)
       Sen <- tp / (tp + fn)
-      res_sp[r, ] <- c(i, methods[k], t, tp, fp, fn, FDR, FNR, Pre, Sen, undefined)
+      res_sp[r, ] <- c(i, methods[k], t, tp, fp, fn, FDR, FNR, Pre, Sen)
       r <- r + 1      
     }
   }

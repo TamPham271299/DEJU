@@ -2,20 +2,8 @@
 
 module load subread/2.0.6
 module load parallel/20240722
+module unload openjdk
 module load R/4.3.3 # also load openjdk/21.0.2
-
-# DIR="/vast/projects/Spatial/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/DEU_mix/balanced_3vs3"
-# BAM="$DIR/STAR_aligned_pass2_minUniqSJReads_3"
-# REF="/vast/projects/lab_chen/tam/ref_genome/Mus_musculus/Gencode/"
-# flat_GTF="$REF/gencode.vM32.annotation.flat.DEXSeq.gtf"
-# MODE="simulation"
-# libs=3
-# target="/vast/projects/lab_chen/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/config/target.${libs}vs${libs}.tsv"
-
-# scripts=""
-# seed="2024"
-# workers="16"
-# noOfSim=20
 
 if [ "$MODE" == "simulation" ]; then
 
@@ -121,7 +109,6 @@ elif [ "$MODE" == "case_study" ]; then
   mv $OUTPUT/tmp.txt $OUTPUT/featureCounts_output.txt
   
   echo "====== `date`: Start running DEXSeq ======" >> $LOG_03_3
-  # pair="Basal-LP,Basal-ML,LP-ML"
   IFS=',' read -r -a pair <<< "$pair"
 
   for p in "${pair[@]}"; do

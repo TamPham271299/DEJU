@@ -1,19 +1,7 @@
 #!/bin/bash 
 
+module unload openjdk
 module load R/4.3.3
-
-# DIR="/vast/projects/Spatial/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/DEU_mix/balanced_3vs3"
-# BAM="$DIR/STAR_aligned_pass2_minUniqSJReads_3"
-# REF="/vast/projects/lab_chen/tam/ref_genome/Mus_musculus/Gencode/"
-# flat_GTF="$REF/gencode.vM32.annotation.flat.DEXSeq.gtf"
-# MODE="simulation"
-# libs=3
-# target="/vast/projects/lab_chen/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/config/target.${libs}vs${libs}.tsv"
-
-# scripts=""
-# seed="2024"
-# workers="16"
-# noOfSim=20
 
 if [ "$MODE" == "simulation" ]; then
 
@@ -72,21 +60,13 @@ if [ "$MODE" == "simulation" ]; then
 
 elif [ "$MODE" == "case_study" ]; then
   
-  # DIR="/vast/projects/lab_chen/tam/Differential_splicing/milevskiy_2023_GSE227748/RNA-seq/"
-  # JAR_DIR="/vast/projects/lab_chen/lab_chen/tam/tools/QoRTs"
-  # BAM_DIR="$DIR/STAR_aligned_pass2_minUniqSJReads_3_can_anno/"
-  # GTF="/stornext/General/data/academic/lab_chen/tam/ref_genome/Mus_musculus/Gencode/gencode.vM32.annotation.gtf.gz"
-  # OUTPUT="$DIR/STAR_output/QoRTs_can_anno_v2/"
-  # target="/vast/projects/lab_chen/tam/Differential_splicing/milevskiy_2023_GSE227748/RNA-seq/config/decoder.bySample.txt"
-  # REF="/vast/projects/lab_chen/tam/ref_genome/Mus_musculus/Gencode/"
-  
   ### Generating raw counts via QoRTs
   OUTPUT="$DIR/QoRTs/"
   mkdir -p $OUTPUT
   
   for SAMPLE in `ls $BAM`; do
       echo $SAMPLE
-      
+
       if [[ ! -e "$DIR/QoRTs/$SAMPLE/QC.QORTS_COMPLETED_OK" ]]; then
         mkdir -p $OUTPUT/$SAMPLE
         bam="$BAM/$SAMPLE/${SAMPLE}.Aligned.sortedByCoord.out.bam"
@@ -99,9 +79,9 @@ elif [ "$MODE" == "case_study" ]; then
         echo "====== `date`: Counting reads is done ======" >> $LOG
         cat $LOG >> $LOG_03_4
       fi
-      
+
   done
-  
+
   if [[ ! -e "$DIR/QoRTs/withNovel.forJunctionSeq.gff.gz" ]]; then
   
     echo "====== `date`: Including Novel Splice Junction Loci ======" >> $LOG_03_4
@@ -118,18 +98,19 @@ elif [ "$MODE" == "case_study" ]; then
   fi
 
   echo "====== `date`: Start running JunctionSeq ======" >> $LOG_03_4
-  # pair="Basal-LP,Basal-ML,LP-ML"
   IFS=',' read -r -a pair <<< "$pair"
     
   for p in "${pair[@]}"; do
     echo "====== $p ======" >> $LOG_03_4
-    IFS='-' read -r g1 g2 <<< "$p"
-    awk -v g1="$g1" -v g2="$g2" 'NR==1 || $2 == g1 || $2 == g2' $target > ${target/.txt/.${p}.txt}
+    if [[ ! -e "$DIR/target/decoder.bySample.${p}.txt" ]]; then
+      IFS='-' read -r g1 g2 <<< "$p"
+      awk -v g1="$g1" -v g2="$g2" 'NR==1 || $2 == g1 || $2 == g2' $target > "$DIR/target/decoder.bySample.${p}.txt"
+    fi
     Rscript --no-save --no-restore --verbose ../DEU/03_4_JunctionSeq.R \
               --MODE=$MODE \
               --DIR=$DIR \
               --REF=$REF \
-              --target=${target/.txt/.${p}.txt} \
+              --target="$DIR/target/decoder.bySample.${p}.txt" \
               --pair=$p \
               --fdr_cutoff=$fdr_cutoff \
               --ncores=$ncores >> $LOG_03_4 2>&1

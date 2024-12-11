@@ -259,17 +259,6 @@ mode <- as.character(args[['mode']])
 isPairedEnd <- as.logical(args[['isPairedEnd']])
 fdr_cutoff <- as.numeric(args[['fdr_cutoff']])
 
-# DIR <- "/vast/projects/Spatial/tam/Differential_splicing/github/data/simulation/unbalanced_3_75_3/"
-# REF <- "/vast/projects/Spatial/tam/Differential_splicing/github/annotation/"
-# targetp <- "/vast/projects/Spatial/tam/Differential_splicing/github/data/simulation/target/target.3vs3.tsv"
-# p <- "Group_2-Group_1"
-# mode <- "simulation"
-# isPairedEnd <- TRUE
-# fdr_cutoff <- 0.05
-# noOfSim <- 1
-# seed <- 2024
-# workers <- 4
-
 FASTA <- paste0(REF, "GRCm39.primary_assembly.genome.fa.gz")
 flat_exon <- paste0(REF, "gencode.vM32.annotation.flattened.exon.saf")
 SJ <- paste0(REF, "gencode.vM32.primary_assembly.annotation.SJdatabase.tsv")

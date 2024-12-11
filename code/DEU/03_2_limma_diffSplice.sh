@@ -1,5 +1,6 @@
 #!/bin/bash 
 
+module unload openjdk
 module load R/4.3.3
 
 ### Running DS using diffSplice

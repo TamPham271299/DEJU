@@ -2,113 +2,179 @@ OK <- requireNamespace("devtools", quietly = TRUE)
 if (!OK) {
   stop("devtools package required but is not installed (or can't be loaded)")
 }
+library(Rsubread)
 library(edgeR)
+library(limma)
 library(BiocParallel)
+
+construct_model_matrix <- function(targetp) {
+  
+  message("Reading target ...")
+  target <- read.table(targetp, sep="\t", header=TRUE, stringsAsFactors=FALSE)
+  group <- factor(target$group)
+  samples <- target$sampleID
+  
+  message("Constructing model matrix ...")
+  design <- model.matrix(~ 0 + group)
+  colnames(design) <- gsub("group", "", colnames(design))
+  
+  return(list('group'=group, 'samples'=samples, 'design'=design))
+}
+
+process_E_count_withDupJ <- function(featureCounts_o) {
+  
+  E_count <- read.table(paste0(featureCounts_o, "exon_count.tsv"), header=TRUE)
+  E_count <- data.frame(E_count[,1:ncol(E_count)], row.names=NULL, check.names = FALSE)
+  E_annot <- read.table(paste0(featureCounts_o, "exon_count_annotation.tsv"), header=TRUE)
+  
+  return(list('E_count'=E_count,
+              'E_annot'=E_annot))
+}
+
+reassign_SJ <- function(J_count, SJ_database) {
+  
+  message("Only consider unique junctions ...")
+  uniq_SJ <- SJ_database[SJ_database$freq==1,]
+  m1 <- match(J_count$juncID, uniq_SJ$juncID)
+  J_count$PrimaryGene <- ifelse(!is.na(m1), uniq_SJ$geneID[m1], J_count$PrimaryGene)
+  
+  message("Whether junctions are annotated or not ...")
+  m2 <- match(J_count$juncID, SJ_database$juncID)
+  J_count$annotated <- ifelse(!is.na(m2), 1, 0)
+  
+  return(J_count) 
+}
+
+process_IE_J_count <- function(featureCounts_o, SJ_database) {
+  
+  message("Analyzing internal exon read counts ...")
+  IE_count <- read.table(paste0(featureCounts_o, "internal_exon_count.tsv"), header=TRUE)
+  IE_count <- data.frame(IE_count[,1:ncol(IE_count)], row.names=NULL, check.names = FALSE)
+  IE_annot <- read.table(paste0(featureCounts_o, "internal_exon_count_annotation.tsv"), header=TRUE)
+  IE_annot <- cbind(IE_annot, Region="Exon", annotated=1)
+  
+  message("Analyzing junction read counts ...")
+  J_count <- read.table(paste0(featureCounts_o, "junction_count.tsv"), header=TRUE)
+  J_count$juncID <- paste(J_count$Site1_chr, 
+                          J_count$Site1_location, 
+                          J_count$Site2_location, 
+                          sep="_")
+  
+  message("Re-assigning junctions to correct genes using junction database ...")
+  J_count <- reassign_SJ(J_count, SJ_database)
+  
+  message("Processing final junction count table ...")
+  J_annot <- data.frame(
+    GeneID=J_count$PrimaryGene,
+    Chr=J_count$Site1_chr,
+    Start=J_count$Site1_location,
+    End=J_count$Site2_location
+  )
+  m <- match(J_annot$GeneID, IE_annot$GeneID)
+  Strand <- IE_annot$Strand[m]
+  J_annot <- cbind(J_annot, Strand=Strand, Length=1, Region="Junction", annotated=J_count$annotated)
+  
+  J_count <- data.frame(J_count[, 9:(ncol(J_count)-2)], row.names = NULL, check.names = FALSE)
+  
+  message("Combining internal exon and junction read count table ...")  
+  IE_J_count <- rbind(IE_count, J_count)
+  IE_J_annot <- rbind(IE_annot, J_annot)
+  
+  return(list('IE_J_count'=IE_J_count,
+              'IE_J_annot'=IE_J_annot))
+}
+
+DEU_analysis <- function(r_count, annot, group, design) {
+  
+  message("Constructing DGElist object ...")  
+  y <- DGEList(counts=r_count, genes=annot, group=group)
+  colnames(y) <- gsub("[.].*$", "", colnames(y))
+  
+  message("Filtering exons with low mapping reads ...")
+  keep <- filterByExpr(y, group=group)
+  y <- y[keep, , keep.lib.sizes=FALSE]
+  
+  message("Normalizing lib sizes ...")
+  y <- normLibSizes(y)
+  
+  message("Transforming data for LM ...")
+  v <- voom(y, design, plot=FALSE)
+  
+  message("Fitting LM for design matrix ...")
+  fit <- lmFit(v, design)
+  
+  return(fit)
+  
+}
+
+DEU_res <- function(fit, design, p) {
+  cmd <- paste("makeContrasts(", p, ",levels=design)", sep="")
+  contr <- eval(parse(text=cmd))
+  print(contr)
+  cfit <- contrasts.fit(fit, contr)
+  
+  message("Running diffSplice ..")
+  sp <- diffSplice(cfit, geneid="GeneID", robust=TRUE, exonid="Start")
+  DEU_simes <- topSplice(sp, test="simes", number=Inf)
+  DEU_F <- topSplice(sp, test="F", number=Inf)
+  DEU_exon <- topSplice(sp, test="t", number=Inf)
+}
 
 # Getting parameters
 args <- R.utils::commandArgs(asValues = TRUE)
 print(args)
 
+wd <- getwd()
 DIR <- as.character(args[['DIR']])
 REF <- as.character(args[['REF']])
 targetp <- as.character(args[['target']])
-
-path_to_sj <- paste0(REF, "gencode.vM32.primary_assembly.annotation.uniqSJInfo.tsv")
-num_of_occur_sj <- paste0(REF, "gencode.vM32.primary_assembly.annotation.uniqSJInfo.numOfOccur.tsv")
+pair <- as.character(args[['pair']])
 i <- "S1"
 
-### 0. Check parameter
-message("Check valid parameters")
+FASTA <- paste0(REF, "GRCm39.primary_assembly.genome.fa.gz")
+flat_exon <- paste0(REF, "gencode.vM32.annotation.flattened.exon.saf")
+SJ <- paste0(REF, "gencode.vM32.primary_assembly.annotation.SJdatabase.tsv")
+SJ_database <- read.table(SJ, header=TRUE)
+
+message("Check parameters ...")
 print(DIR)
 print(REF)
-print(path_to_sj)
-print(num_of_occur_sj)
 print(targetp)
-
+print(FASTA)
+print(flat_exon)
+print(SJ)
+print(pair)
+    
 message(paste0('Processing: ', i, " ..."))
-OUTPUT <- paste0(DIR, "STAR_output/limma_fit_RL_75_test/", i, "/")
-readCount_output <- paste0(DIR, "STAR_output/featureCounts_fit_RL_75/minMQS_255/", i, "/")
-dir.create(OUTPUT, showWarnings = FALSE, recursive = TRUE)
 
-### Read count quantification
-message('Loading read counts at exon, junction ...')
-# Exon-level read counts with double-counted junctions
-exon_count_f <- read.table(paste0(readCount_output, "exon_count.tsv"), header=TRUE)
-exon_count <- data.frame(exon_count_f[,1:ncol(exon_count_f)], row.names=NULL, check.names = FALSE)
-exon_annot <- read.table(paste0(readCount_output, "exon_count_annotation.tsv"), header=TRUE)
+message("Creating output folders to store read counts and DEU results ...")
+featureCounts_o <- paste0(DIR, "featureCounts/", i, "/")
+dir.create(featureCounts_o, showWarnings = FALSE, recursive = TRUE)
+DEU_analysis_o <- paste0(DIR, "limma_diffSplice/", i, "/")
+dir.create(DEU_analysis_o, showWarnings = FALSE, recursive = TRUE)
 
-# Internal exon read counts
-internal_exon_count_f <- read.table(paste0(readCount_output, "internal_exon_count.tsv"), header=TRUE)
-internal_exon_count <- data.frame(internal_exon_count_f[,1:ncol(internal_exon_count_f)], row.names=NULL, check.names = FALSE)
-internal_exon_annot <- read.table(paste0(readCount_output, "internal_exon_count_annotation.tsv"), header=TRUE)
+message("Constructing design matrix for contrast ...")
+mat <- construct_model_matrix(targetp)
 
-# Junction read counts
-junc_count_f <- read.table(paste0(readCount_output, "junction_count.tsv"), header=TRUE)
-junc_count_f$juncID <- paste(junc_count_f$Site1_chr, junc_count_f$Site1_location, junc_count_f$Site2_location, sep="_")
-annotated_sj <- read.table(path_to_sj, header=TRUE)
-numOfOccur_sj <- read.table(num_of_occur_sj, header=TRUE)
-m_numOfOccur <- match(annotated_sj$juncID, numOfOccur_sj$juncID)
-annotated_sj$numOfOccur <- numOfOccur_sj$numOfOccur[m_numOfOccur]
-annotated_sj_numOfOccur_1 <- annotated_sj[annotated_sj$numOfOccur==1,]
-m1 <- match(junc_count_f$juncID, annotated_sj_numOfOccur_1$juncID)
-junc_count_f$PrimaryGene <- ifelse(!is.na(m1), annotated_sj_numOfOccur_1$geneID[m1], junc_count_f$PrimaryGene)
-m2 <- match(junc_count_f$juncID, annotated_sj$juncID)
-junc_count_f$annotated <- ifelse(!is.na(m2), 1, 0)
-junc_count <- data.frame(junc_count_f[, 9:(ncol(junc_count_f)-2)], row.names = NULL, check.names = FALSE)
-junc_annot <- data.frame(
-  GeneID=junc_count_f$PrimaryGene,
-  Chr=junc_count_f$Site1_chr,
-  Start=junc_count_f$Site1_location,
-  End=junc_count_f$Site2_location
-)
-m <- match(junc_annot$GeneID, internal_exon_annot$GeneID)
-Strand <- internal_exon_annot$Strand[m]
-junc_annot <- cbind(junc_annot, Strand=Strand, Length=1, Region="Junction", annotated=junc_count_f$annotated)
+message("Constructing a matrix for exon read counts with duplicated junction count ...")
+E <- process_E_count_withDupJ(featureCounts_o)
 
-internal_exon_junc_count <- rbind(internal_exon_count, junc_count)
-internal_exon_annot <- cbind(internal_exon_annot, Region="Exon", annotated=1)
-internal_exon_junc_annot <- rbind(internal_exon_annot, junc_annot)
+message("Starting DEU analysis for DEU-limma method ...")
+DEU_fit <- DEU_analysis(E$E_count,
+                        E$E_annot,
+                        mat$group, mat$design)
 
-### Preliminary analysis
-message('Preliminary analysis ...')
-### design model
-target <- read.table(targetp, sep="\t", header=TRUE, stringsAsFactors=FALSE)
-group <- factor(target$Group, levels=c("Group_1","Group_2"))
-design <- model.matrix(~ group)
+message("Combining internal exon and junction read count matrix ...")  
+IE_J <- process_IE_J_count(featureCounts_o, SJ_database)
 
-## Existing approach
-y_current_ap <- DGEList(counts=exon_count, genes=exon_annot, group=group)
-colnames(y_current_ap) <- gsub("[.].*$", "", colnames(y_current_ap))
-keep <- filterByExpr(y_current_ap, group=group)
-y_current_ap <- y_current_ap[keep, , keep.lib.sizes=FALSE]
-y_current_ap <- normLibSizes(y_current_ap)
-v_current_ap <- voom(y_current_ap, design, plot=FALSE)
-print(y_current_ap)
-v_current_ap_fit <- lmFit(v_current_ap, design)
+message("Starting DEJU analysis for DEJU-limma ...")
+DEJU_fit <- DEU_analysis(IE_J$IE_J_count,
+                         IE_J$IE_J_annot,
+                         mat$group, mat$design)
 
-## Junction approach (internal exon read + junction read)
-y_new_ap <- DGEList(counts=internal_exon_junc_count, genes=internal_exon_junc_annot, group=group)
-colnames(y_new_ap) <- gsub("[.].*$", "", colnames(y_new_ap))
-keep <- filterByExpr(y_new_ap, group=group)
-y_new_ap <- y_new_ap[keep, , keep.lib.sizes=FALSE]
-y_new_ap <- normLibSizes(y_new_ap)
-v_new_ap <- voom(y_new_ap, design, plot=FALSE)
-print(y_new_ap)
-v_new_ap_fit <- lmFit(v_new_ap, design)
+message("Running diffSplice for DEU-limma ...")
+res <- DEU_res(DEU_fit, mat$design, pair)  
 
-### Differential alternative splicing analysis
-message('DEU analysis ...')
-
-## Existing approach
-ds_v_current_ap <- diffSplice(v_current_ap_fit, geneid="GeneID", robust=TRUE, exonid="Start")
-v_current_ap_simes <- topSplice(ds_v_current_ap, test="simes", n=NULL, FDR=0.05)
-v_current_ap_gene <- topSplice(ds_v_current_ap, test="F", n=NULL, FDR=0.05)
-write.table(v_current_ap_simes, file.path(OUTPUT, "DEU_current_approach_simes_minMQS_255.tsv"), row.names=FALSE, sep="\t", quote=FALSE)
-write.table(v_current_ap_gene, file.path(OUTPUT, "DEU_current_approach_gene_minMQS_255.tsv"), row.names=FALSE, sep="\t", quote=FALSE)
-
-## Junction approach
-ds_v_new_ap <- diffSplice(v_new_ap_fit, geneid="GeneID", robust=TRUE, exonid="Start")
-v_new_ap_simes <- topSplice(ds_v_new_ap, test="simes", n=NULL, FDR=0.05)
-v_new_ap_gene <- topSplice(ds_v_new_ap, test="F", n=NULL, FDR=0.05)
-write.table(v_new_ap_simes, file.path(OUTPUT, "DEU_new_approach_simes_minMQS_255_SJ.tsv"), row.names=FALSE, sep="\t", quote=FALSE)
-write.table(v_new_ap_gene, file.path(OUTPUT, "DEU_new_approach_gene_minMQS_255_SJ.tsv"), row.names=FALSE, sep="\t", quote=FALSE)
+message("Running diffSplice for DEJU-limma ...")
+res <- DEU_res(DEJU_fit, mat$design, pair)  
+    
