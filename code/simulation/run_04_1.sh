@@ -3,7 +3,7 @@
 #SBATCH --array=1-6
 #SBATCH --mem=4G
 #SBATCH --cpus-per-task=4
-#SBATCH --time=00:10:00
+#SBATCH --time=00:30:00
 #SBATCH --output=slurm-%A_%a.out
 
 module load parallel/20240722
@@ -21,14 +21,10 @@ libs=$(echo $parVec| awk '{print $2}')
 rlen=$(echo $parVec| awk '{print $3}')
 fc=$(echo $parVec| awk '{print $4}')
 
-# DIR="/vast/projects/MM/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/DEU_mix/${scenario}_${libs}_${rlen}_${fc}/"
-# AS_map="/vast/projects/lab_chen/tam/ref_genome/Mus_musculus/Gencode/PC_genes_ver2/AS/AS_genes.info.updated.tsv"
-
 DIR="../../data/simulation/${scenario}_${libs}_${rlen}_${fc}/"
 DEU_map="../../data/simulation/customized_transcriptome/DEU_genes.info.tsv"
 fdr_cutoff=0.05
 
-# noOfSim=20
 seed=2024
 workers=4
 

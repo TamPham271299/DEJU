@@ -1,9 +1,9 @@
 #!/bin/bash 
 #SBATCH --job-name=03_4_JunctionSeq
-#SBATCH --array=4
+#SBATCH --array=1-6
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=16
-#SBATCH --time=2:00:00
+#SBATCH --time=48:00:00
 #SBATCH --output=slurm-%A_%a.out
 
 # Reading parameters
@@ -18,12 +18,6 @@ libs=$(echo $parVec| awk '{print $2}')
 rlen=$(echo $parVec| awk '{print $3}')
 fc=$(echo $parVec| awk '{print $4}')
 
-# DIR="/vast/projects/MM/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/DEU_mix/${scenario}_${libs}_${rlen}_${fc}/"
-# REF="/vast/projects/lab_chen/tam/ref_genome/Mus_musculus/Gencode/"
-# GTF="$REF/gencode.vM32.annotation.gtf.gz"
-# JAR_DIR="/vast/projects/lab_chen/tam/tools/QoRTs"
-# target_JunctionSeq="/vast/projects/lab_chen/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/config/decoder.bySample.${libs}vs${libs}.txt"
-
 DIR="../../data/simulation/${scenario}_${libs}_${rlen}_${fc}/"
 BAM="$DIR/aligned_pass2/"
 REF="../../annotation/"
@@ -34,7 +28,6 @@ pair="Group_2-Group_1"
 MODE="simulation"
 fdr_cutoff=0.05
 
-# noOfSim=20
 seed=2024
 workers=4
 ncores=4

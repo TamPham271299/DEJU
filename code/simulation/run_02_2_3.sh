@@ -1,9 +1,9 @@
 #!/bin/bash 
 #SBATCH --job-name=02_2_3_SJfilter_genomeReindex
-#SBATCH --array=3,4
+#SBATCH --array=1-6
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=16
-#SBATCH --time=2:00:00
+#SBATCH --time=48:00:00
 #SBATCH --output=slurm-%A_%a.out
 
 # Reading parameters
@@ -17,10 +17,6 @@ scenario=$(echo $parVec| awk '{print $1}')
 libs=$(echo $parVec| awk '{print $2}')
 rlen=$(echo $parVec| awk '{print $3}')
 fc=$(echo $parVec| awk '{print $4}')
-
-# DIR="/vast/projects/MM/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/DEU_mix/${scenario}_${libs}_${rlen}_${fc}/"
-# REF="/vast/projects/lab_chen/tam/ref_genome/Mus_musculus/Gencode/"
-# FASTA="$REF/GRCm39.primary_assembly.genome.fa"
 
 DIR="../../data/simulation/${scenario}_${libs}_${rlen}_${fc}/"
 RAW="$DIR/raw/"

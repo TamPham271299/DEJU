@@ -2,7 +2,7 @@
 #SBATCH --job-name=00_customized_transcriptome
 #SBATCH --mem=8G
 #SBATCH --cpus-per-task=4
-#SBATCH --time=00:5:00
+#SBATCH --time=00:10:00
 #SBATCH --output=slurm-%A.out
 
 module load R/4.3.3

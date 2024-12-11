@@ -1,3 +1,3 @@
 #!/bin/bash 
 
-sbatch main.sh
+sbatch main_test.sh

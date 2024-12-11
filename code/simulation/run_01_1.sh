@@ -1,9 +1,9 @@
 #!/bin/bash 
 #SBATCH --job-name=01_1_simulation
-#SBATCH --array=3,4
+#SBATCH --array=1-6
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=16
-#SBATCH --time=2:00:00
+#SBATCH --time=48:00:00
 #SBATCH --output=slurm-%A_%a.out
 
 module load R/4.3.3 # also load openjdk/21.0.2
@@ -20,15 +20,10 @@ libs=$(echo $parVec| awk '{print $2}')
 rlen=$(echo $parVec| awk '{print $3}')
 fc=$(echo $parVec| awk '{print $4}')
 
-### Path to scenario
-# DIR="/vast/projects/MM/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/DEU_mix/${scenario}_${libs}_${rlen}_${fc}/"
 DIR="../../data/simulation/${scenario}_${libs}_${rlen}_${fc}/"
-# scripts="/vast/projects/Spatial/tam/Differential_splicing/DEJU/code/simulation"
 
 ### Customized transcriptome
-# transcriptome_fasta="/vast/projects/lab_chen/tam/ref_genome/Mus_musculus/Gencode/PC_genes_ver2/AS/gencode.vM32.clean.transcriptome.1.fa"
 transcriptome_fasta="../../data/simulation/customized_transcriptome/gencode.vM32.custom.transcriptome.fa"
-# metadata_of_transcriptome="/vast/projects/lab_chen/tam/ref_genome/Mus_musculus/Gencode/PC_genes_ver2/AS/AS_genes.info.tsv"
 metadata_of_transcriptome="../../data/simulation/customized_transcriptome/DEU_genes.info.tsv"
 
 ### simReads settings

@@ -1,9 +1,9 @@
 #!/bin/bash 
 #SBATCH --job-name=03_1_edgeR_diffSpliceDGE
-#SBATCH --array=3
+#SBATCH --array=1-6
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=16
-#SBATCH --time=00:10:00
+#SBATCH --time=12:00:00
 #SBATCH --output=slurm-%A_%a.out
 
 # Reading parameters
@@ -18,20 +18,14 @@ libs=$(echo $parVec| awk '{print $2}')
 rlen=$(echo $parVec| awk '{print $3}')
 fc=$(echo $parVec| awk '{print $4}')
 
-# DIR="/vast/projects/MM/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/DEU_mix/${scenario}_${libs}_${rlen}_${fc}/"
-# RAW="$DIR/raw_fit_RL_75/"
-# target="/vast/projects/lab_chen/tam/Differential_splicing/simulation_3vs3_mouse_genome/RNA-seq/config/target.${libs}vs${libs}.tsv"
-
 MODE="simulation"
 DIR="../../data/simulation/${scenario}_${libs}_${rlen}_${fc}/"
 REF="../../annotation/"
 target="../../data/simulation/target/target.${libs}vs${libs}.tsv"
-# pair="Group_2-Group_1,Group_3-Group_4"
 pair="Group_2-Group_1"
 isPairedEnd=TRUE
 fdr_cutoff=0.05
 
-# noOfSim=2
 seed=2024
 workers=4
 
