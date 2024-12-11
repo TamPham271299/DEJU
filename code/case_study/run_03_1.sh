@@ -6,10 +6,10 @@
 #SBATCH --output=slurm-%A.out
 
 MODE="case_study"
-# DIR="../../data/case_study/$projName/"
 DIR="$DIR"
 REF="../../annotation/"
-target="$DIR/target/target.tsv"
+# target="$DIR/target/target.tsv"
+target="$DIR/target/target.${pair}.tsv"
 pair="$pair"
 isPairedEnd="$isPairedEnd"
 fdr_cutoff=0.05

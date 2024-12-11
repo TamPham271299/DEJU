@@ -5,10 +5,8 @@
 #SBATCH --time=2:30:00
 #SBATCH --output=slurm-%A.out
 
-# DIR="../../data/case_study/$projName/"
-# RAW="$DIR/raw/"
 DIR="$DIR"
-RAW="$RAW"
+RAW="$DIR/raw/"
 bioPrjID="$bioPrjID"
 dl_list="$DIR/config/sampleInfo_${bioPrjID}.txt"
 isPairedEnd="$isPairedEnd"

@@ -7,7 +7,6 @@
 #SBATCH --output=slurm-%A.out
 
 MODE="case_study"
-# DIR="../../data/case_study/$projName/"
 DIR="$DIR"
 BAM="$DIR/aligned_pass2/"
 target="$DIR/target/target.tsv"

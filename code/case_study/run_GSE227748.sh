@@ -1,8 +1,8 @@
 #!/bin/bash 
 
-# projName=""
+projName="GSE227748"
 bioPrjID="PRJNA946753"
-DIR="/vast/projects/MM/tam/Differential_splicing/milevskiy_2023_GSE227748/"
+DIR="../../data/case_study/$projName/"
 isPairedEnd=TRUE
 
 mkdir -p $DIR/log $DIR/target
@@ -72,8 +72,7 @@ job_02_2_3_id=$(sbatch --dependency=afterany:$job_02_1_id run_02_2_3.sh)
 job_02_4_id=$(sbatch --dependency=afterany:$job_02_2_3_id run_02_4.sh)
 
 ### Part 3: DEU analysis
-# pair="Basal-LP,Basal-ML,LP-ML"
-pair="Basal-ML"
+pair="LP-ML"
 
 export pair="$pair"
 

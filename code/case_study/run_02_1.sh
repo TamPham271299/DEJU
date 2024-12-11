@@ -6,7 +6,6 @@
 #SBATCH --output=slurm-%A.out
 
 MODE="case_study"
-# DIR="../../data/case_study/$projName/"
 DIR="$DIR"
 TRIMMED="$DIR/trimmed/"
 bioPrjID="$bioPrjID"

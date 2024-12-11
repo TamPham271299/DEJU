@@ -6,10 +6,9 @@
 #SBATCH --output=slurm-%A.out
 
 MODE="case_study"
-# DIR="../../data/case_study/$projName/"
 DIR="$DIR"
 REF="../../annotation/"
-target="$DIR/target/target.tsv"
+target="$DIR/target/target.${pair}.tsv"
 pair="$pair"
 isPairedEnd="$isPairedEnd"
 fdr_cutoff=0.05
@@ -28,6 +27,6 @@ export LOG_03_2="$LOG_03_2"
 
 chmod +x "../DEU/03_2_limma_diffSplice.sh"
 
-echo "====== `date`: limma:diffSplice ======" > $LOG_03_2
+# echo "====== `date`: limma:diffSplice ======" > $LOG_03_2
 bash "../DEU/03_2_limma_diffSplice.sh"
 echo "====== `date`: limma:diffSplice is done! ======" >> $LOG_03_2

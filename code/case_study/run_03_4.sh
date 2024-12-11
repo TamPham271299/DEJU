@@ -6,14 +6,13 @@
 #SBATCH --output=slurm-%A.out
 
 MODE="case_study"
-# DIR="../../data/case_study/$projName/"
 DIR="$DIR"
 BAM="$DIR/aligned_pass2/"
 maxRL="$maxRL"
 JAR_DIR="../../tools/QoRTs"
-target_JunctionSeq="$DIR/target/decoder.bySample.txt"
+target_JunctionSeq="$DIR/target/decoder.bySample.${pair}.txt"
 REF="../../annotation/"
-GTF="$REF/gencode.vM32.annotation.gtf.gz"
+GTF="$REF/gencode.vM32.annotation.gtf"
 pair="$pair"
 fdr_cutoff=0.05
 ncores=4
@@ -36,7 +35,7 @@ export LOG_03_4="$LOG_03_4"
 
 chmod +x "../DEU/03_4_JunctionSeq.sh"
 
-echo "====== `date`: JunctionSeq ======" > $LOG_03_4
+# echo "====== `date`: JunctionSeq ======" > $LOG_03_4
 echo $pair >> $LOG_03_4
 bash "../DEU/03_4_JunctionSeq.sh"
 echo "====== `date`: JunctionSeq is done! ======" >> $LOG_03_4
