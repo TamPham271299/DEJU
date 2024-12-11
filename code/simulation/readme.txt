@@ -74,20 +74,8 @@ Computing time per step
 5 - approximately 1 day (**)
 6 - approximately 6 hours (**)
 
-(*) note that, instead of running on-the-go script, run each numbered step one-by-one.
+(*) note that, instead of running on-the-go script, alternatively run each numbered step one-by-one.
 (**) note that these steps use parallel computing in several parts of the
     scripts, please adjust accordingly.
 
-
-For 1 simulation (balanced_10_75_3)
-run_00 (30s)
-run_01_1 (1 hrs)
-run_02_0 (...)
-run_02_1 (2 hrs)
-run_02_2_3 (...)
-run_02_4 (...)
-run_03_1 (...)
-run_03_2 (...)
-run_03_3 (...)
-run_03_4 (...)
 
