@@ -21,8 +21,7 @@ Pham, M. T., Milevskiy, M. J. G., Visvader, J. E., Chen, Y. Incorporating exon-e
 ```plaintext
 DEJU/
 ├── annotation/
-│   ├── duplicated_sequences.tsv/    # duplicate sequences discarded for the simulation process
-│   └── processed/        # Data after cleaning and preprocessing
+│   └── duplicated_sequences.tsv/    # duplicate sequences discarded for the simulation process
 ├── code/
 │   ├── annotation_dl    # Script to prepare reference genome datasets of mm39 (GTF, FASTA, exon-junction SAF...) 
 │   ├── alignment      # Script to map reads to reference genome mm39
