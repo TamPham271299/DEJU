@@ -21,6 +21,7 @@ Pham, M. T., Milevskiy, M. J. G., Visvader, J. E., Chen, Y. Incorporating exon-e
 ```plaintext
 DEJU/
 ├── annotation/
+│   ├── gene_info_GRCm39_M32_ensembl109.tsv    # Gene information
 │   └── duplicated_sequences.tsv/    # duplicate sequences discarded for the simulation process
 ├── code/
 │   ├── annotation_dl    # Script to prepare reference genome datasets of mm39 (GTF, FASTA, exon-junction SAF...) 
@@ -32,5 +33,7 @@ DEJU/
 │   └── analysis      # Main script to perform overall analysis, create figures for the paper
 ├── tools/
 │   └── Subread_to_DEXSeq/    # External scripts to generate exon counts for DEXSeq
+├── figures/
+│   └── fig_S1.png    # DEJU analysis worflow
 └── README.md                  # Main documentation for the repository
 
