@@ -64,15 +64,15 @@ count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
 
 Output files:
 
-Internal exon counts are stored in **count$counts** object
+Internal exon counts are stored in `count$counts` object
 
-Exon-exon junction counts are stored in **count$counts_junction** object
+Exon-exon junction counts are stored in `count$counts_junction object
 
-Final count matrix (internal exon + junction counts) will be stored in **final_count** object
+Final count matrix (internal exon + junction counts) will be stored in `final_count` object
 
 #### Differential exon-junction usage (edgeR diffSpliceDGE)
 
-Input files: final_count (exon-junction counts), annot (exon-junction annotation), group (group details), contr (contrast matrix), design (design matrix)
+Input files: `final_count` (exon-junction counts), `annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
 
 ```r
 message("Constructing DGElist object ...")  
@@ -119,13 +119,10 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 
 **Field descriptions:**
 
-GeneID, Chr, Strand, Symbol: Gene details
-
-NExons: The total number of exons and junctions of the gene
-
-P.value: p-value of Simes test
-
-FDR: False discovery rate
+`GeneID`, `Chr`, `Strand`, `Symbol`: Gene details\
+`NExons`: The total number of exons and junctions of the gene\
+`P.value`: p-value of Simes test\
+`FDR`: False discovery rate
 
 **DEU genes from gene-level F-test**
 
@@ -138,15 +135,11 @@ FDR: False discovery rate
 
 **Field descriptions:**
 
-GeneID, Chr, Strand, Symbol: Gene details
-
-NExons: The total number of exons and junctions of the gene
-
-gene.F: F-statistics for gene
-
-P.value: p-value of F-test
-
-FDR: False discovery rate
+`GeneID`, `Chr`, `Strand`, `Symbol`: Gene details\
+`NExons`: The total number of exons and junctions of the gene\
+`gene.F`: F-statistics for gene\
+`P.value`: p-value of F-test\
+`FDR`: False discovery rate
 
 **Differentially used exons and splice junctions from exon-level test**
 
@@ -159,17 +152,11 @@ FDR: False discovery rate
 
 **Field descriptions:**
 
-`GeneID`, Chr, Strand, Symbol: Gene details\
-Start, End: Exon/Junction's start/end coordinators
-
-Region: whether the region is junction or exon
-
-annotated: whether exon/junction is annotated
-
-logFC: log2 fold-change of one exon vs all the exons for the same gene
-
-exon.F: F-statistics for exon/junction
-
-P.value: p-value of exon-level test
-
-FDR: False discovery rate
+`GeneID`, `Chr`, `Strand`, `Symbol`: Gene details\
+`Start`, `End`: Start/end coordinators of exonic/junction regions\
+`Region`: Whether the region is junction or exon\
+`annotated`: whether exon/junction is annotated or novel\
+`logFC`: log2 fold-change of one exon vs all the exons for the same gene\
+`exon.F`: F-statistics for exon/junction\
+`P.value`: p-value of exon-level test\
+`FDR`: False discovery rate\
