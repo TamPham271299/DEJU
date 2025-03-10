@@ -49,9 +49,9 @@ We provide basic steps of our DEJU-edgeR method
 
 #### 0. Reference genome
 
-Genomic annotation `genome.gtf` and genomic sequence `genome.fasta` of the reference genome.
-To generate flattened and merged exon annotation, please visit DEJU/code/annotation_dl/GTF2SAF.R
-To generate junction database, please visit DEJU/code/annotation_dl/GTF2SJdatabase.R
+Genomic annotation `genome.gtf` and genomic sequence `genome.fasta` of the reference genome.\
+To generate flattened and merged exon annotation, please visit DEJU/code/annotation_dl/GTF2SAF.R\
+To generate junction database, please visit DEJU/code/annotation_dl/GTF2SJdatabase.R\
 
 #### 1. Exon-junction read mapping with 2-pass mapping using STAR
 
@@ -117,8 +117,8 @@ IE_J_annot <- rbind(IE_annot, J_annot)
 
 Exon-junction count table and annotation is stored in `IE_J_count` and `IE_J_annot` object.
 
-For example:
-`IE_J_count` contains counts of each feature (exon/junction) with each column representing each sample
+For example:\
+`IE_J_count` contains counts of each feature (exon/junction) with each column representing each sample.
 ```tsv
 7587  5384  6408  6617
 732  567  731  709
@@ -140,7 +140,7 @@ ENSMUSG00000000001.5  chr3  108016632  108019251  -  1  Junction  0
 
 #### 3. Differential exon-junction usage (edgeR diffSpliceDGE)
 
-**Input:** `IE_J_count` (exon-junction counts), `IE_J_annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
+**Input:** `IE_J_count` (exon-junction counts), `IE_J_annot` (exon-junction annotation), `group` (group names), `contr` (contrast matrix), `design` (design matrix)
 
 ```r
 library(edgeR)
@@ -229,4 +229,4 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 `logFC`: log2 fold-change of one exon vs all the exons for the same gene\
 `exon.F`: F-statistics for exon/junction\
 `P.value`: p-value of exon-level test\
-`FDR`: False discovery rate\
+`FDR`: False discovery rate
