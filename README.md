@@ -45,12 +45,12 @@ DEJU/
 
 ### DEJU workflow
 
-#### Exon-junction read mapping (STAR splice-aware aligners)
+1. Exon-junction read mapping (STAR splice-aware aligners)
 
 Input files:
 Output files:
 
-#### Exon-junction read quantification (Rsubread featureCounts)
+2. Exon-junction read quantification (Rsubread featureCounts)
 
 Input files:
 
@@ -70,9 +70,9 @@ Exon-exon junction counts are stored in `count$counts_junction object
 
 Final count matrix (internal exon + junction counts) will be stored in `final_count` object
 
-#### Differential exon-junction usage (edgeR diffSpliceDGE)
+3. Differential exon-junction usage (edgeR diffSpliceDGE)
 
-Input files: `final_count` (exon-junction counts), `annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
+   - Input files: `final_count` (exon-junction counts), `annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
 
 ```r
 message("Constructing DGElist object ...")  
@@ -150,7 +150,7 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 |ENSMUSG00000052033.14|chr2|170338348|170338519|+|172|Exon|1|Pfdn4|2.72395320118021|173.077184263658|6.38666490130182e-18|5.00324941703083e-13|
 |ENSMUSG00000031075.20|chr7|144292097|144292329|-|233|Exon|1|Ano1|-2.4622662045429|64.9322523521431|3.0230138821824e-14|1.77614913387215e-09|
 
-**Field descriptions:**
+-**Field descriptions:**
 
 `GeneID`, `Chr`, `Strand`, `Symbol`: Gene details\
 `Start`, `End`: Start/end coordinators of exonic/junction regions\
