@@ -104,6 +104,7 @@ Output files:
 DEU gene results from gene-level Simes test
 
 |GeneID|Chr|Strand|annotated|Symbol|NExons|P.Value|FDR|
+|----|----|----|----|----|----|----|----|
 |ENSMUSG00000028337.15|chr4|-|1|Coro2a|27|5.63409202936316e-18|7.44150875238286e-14|
 |ENSMUSG00000052033.14|chr2|+|1|Pfdn4|11|7.025331391432e-17|4.63952885090169e-13|
 |ENSMUSG00000031075.20|chr7|-|1|Ano1|62|1.87426860695308e-12|8.25177992021212e-09|
