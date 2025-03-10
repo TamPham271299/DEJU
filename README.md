@@ -159,8 +159,7 @@ FDR: False discovery rate
 
 **Field descriptions:**
 
-GeneID, Chr, Strand, Symbol: Gene details
-
+`GeneID`, Chr, Strand, Symbol: Gene details\
 Start, End: Exon/Junction's start/end coordinators
 
 Region: whether the region is junction or exon
