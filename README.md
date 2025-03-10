@@ -45,13 +45,13 @@ DEJU/
 
 ### DEJU workflow
 
-We provide basic steps of our DEJU-edgeR method
+Here, we provide basic steps of our DEJU-edgeR method to detect DEU genes from paired-end RNA-seq data for 2 groups with 2 biological replicates.
 
 #### 0. Reference genome
 
 Genomic annotation `genome.gtf` and genomic sequence `genome.fasta` of the reference genome.\
-To generate flattened and merged exon annotation, please visit DEJU/code/annotation_dl/GTF2SAF.R\
-To generate junction database, please visit DEJU/code/annotation_dl/GTF2SJdatabase.R\
+To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R`\
+To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R`
 
 #### 1. Exon-junction read mapping with 2-pass mapping using STAR
 
