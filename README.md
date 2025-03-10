@@ -179,7 +179,7 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 
 - **DEU genes from gene-level Simes test**
 ```r
-topSpliceDGE(sp, test="Simes", number=Inf)
+topSpliceDGE(sp, test="Simes")
 ```
 |GeneID|Chr|Strand|Symbol|NExons|P.Value|FDR|
 |----|----|----|----|----|----|----|
@@ -197,7 +197,7 @@ topSpliceDGE(sp, test="Simes", number=Inf)
 
 - **DEU genes from gene-level F-test**
 ```r
-topSpliceDGE(sp, test="gene", number=Inf)
+topSpliceDGE(sp, test="gene")
 ```
 |GeneID|Chr|Strand|Symbol|NExons|gene.F|P.Value|FDR|
 |----|----|----|----|----|----|----|----|
@@ -216,7 +216,7 @@ topSpliceDGE(sp, test="gene", number=Inf)
 
 - **Differentially used exons and splice junctions from exon-level test**
 ```r
-topSpliceDGE(sp, test="exon", number=Inf)
+topSpliceDGE(sp, test="exon")
 ```
 |GeneID|Chr|Start|End|Strand|Length|Region|annotated|Symbol|logFC|exon.F|P.Value|FDR|
 |----|----|----|----|----|----|----|----|----|----|----|----|----|
