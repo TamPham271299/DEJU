@@ -45,36 +45,82 @@ DEJU/
 
 ### DEJU workflow
 
+We provide basic steps of our DEJU-edgeR method
+
+#### 0. Reference genome
+
+Genomic annotation `genome.gtf` and genomic sequence `genome.fasta` of the reference genome.
+
+```r
+library(Rubread)
+
+message('Generating flattened and merged exon annotation from reference genome GTF ...')
+flat_exon <- flattenGTF(genome.gtf, method='merge')
+
+message('Generate junction database from reference genome GTF ...')
+junc_db <- 
+```
+
 #### 1. Exon-junction read mapping (STAR splice-aware aligners)
 
-Input files:
-Output files:
+**Input:** `genome.gtf`, `genome.fasta`, `sample1_gr1_R1.fq`, `sample1_gr1_R2.fq`, `sample2_gr1_R1.fq`,  `sample2_gr1_R2.fq`, `sample1_gr2_R1.fq`, `sample1_gr2_R2.fq`, `sample2_gr2_R1.fq`, `sample2_gr2_R2.fq`
+
+```bash
+
+```
+
+**Output:** `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
 
 #### 2. Exon-junction read quantification (Rsubread featureCounts)
 
-**Input files:**
+**Input:** `flat_exon`, `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
 
 ```r
+library(Rsubread)
+
+BAM_files <- list(sample1_gr1.bam, sample2_gr1.bam, sample1_gr2.bam, sample2_gr2.bam)
+
+message('Quantify internal exon + exon-exon junction reads ...')
 count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
-                                  annot.ext=flat_exon.tsv, # merged and flattened exon annotation
+                                  annot.ext=flat_exon, # merged and flattened exon annotation
                                   useMetaFeatures=FALSE, # summarize exon-level reads
                                   nonSplitOnly=TRUE, splitOnly=FALSE, # quantify internal exon reads
-                                  juncCounts=TRUE # quantify exon-exon junction reads)
+                                  juncCounts=TRUE # quantify exon-exon junction reads
+                                  isPairedEnd=FALSE # is paired-end?)
+
+message('Internal exon count and annotation ...')
+IE_count <-
+IE_annot <-
+
+message('Exon-exon junction count and annotation ...')
+J_count <-
+J_annot <-
+
+message('Combine internal exon counts and junction counts into an exon-junction count table ...')
+IE_J_count <- 
+IE_J_annot <- 
 ```
 
-**Output files:**
+**Output:**
 
-Internal exon counts are stored in `count$counts` object\
-Exon-exon junction counts are stored in `count$counts_junction` object\
-Final count matrix (internal exon + junction counts) will be stored in `final_count` object\
+Internal exon counts are stored in `count$counts` object
+
+Internal exon counts are stored in `count$annotation` object
+
+Exon-exon junction counts are stored in `count$counts_junction` object
+
+Exon-junction count table (internal exon + junction counts) is stored in `IE_J_count` object
+Associated exon-junction annotation (internal exon + junction counts) is stored in `IE_J_annot` object
 
 #### 3. Differential exon-junction usage (edgeR diffSpliceDGE)
 
-**Input files:** `final_count` (exon-junction counts), `annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
+**Input:** `final_count` (exon-junction counts), `annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
 
 ```r
+library(edgeR)
+
 message("Constructing DGElist object ...")  
-y <- DGEList(counts=final_count, genes=annot, group=group)
+y <- DGEList(counts=IE_J_count, genes=IE_J_annot, group=group)
 colnames(y) <- gsub("[.].*$", "", colnames(y))
 
 message("Filtering exons with low mapping reads ...")
@@ -97,7 +143,7 @@ DEU_F <- topSpliceDGE(sp, test="gene", number=Inf)
 DEU_exon <- topSpliceDGE(sp, test="exon", number=Inf)
 ```
 
-**Output files:**
+**Output:**
 Results provides ranked genes or exons by evidence for differential splicing, based on sorted adjusted p-values. 
 The exon-level tests test for differences between each exon and all the exons for the same gene. 
 The gene-level tests test for any differences in exon usage between experimental conditions. 
@@ -106,7 +152,7 @@ It returns the minimum Simes-adjusted p-values for each gene.
 The gene-level tests are likely to be powerful for genes in which several exons are differentially splices. 
 The Simes p-values is likely to be more powerful when only a minority of the exons for a gene are differentially spliced. 
 
-- DEU genes from gene-level Simes test
+- **DEU genes from gene-level Simes test**
 
 |GeneID|Chr|Strand|Symbol|NExons|P.Value|FDR|
 |----|----|----|----|----|----|----|
@@ -139,7 +185,7 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 `P.value`: p-value of F-test\
 `FDR`: False discovery rate
 
-**Differentially used exons and splice junctions from exon-level test**
+- **Differentially used exons and splice junctions from exon-level test**
 
 |GeneID|Chr|Start|End|Strand|Length|Region|annotated|Symbol|logFC|exon.F|P.Value|FDR|
 |----|----|----|----|----|----|----|----|----|----|----|----|----|
@@ -148,7 +194,7 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 |ENSMUSG00000052033.14|chr2|170338348|170338519|+|172|Exon|1|Pfdn4|2.72395320118021|173.077184263658|6.38666490130182e-18|5.00324941703083e-13|
 |ENSMUSG00000031075.20|chr7|144292097|144292329|-|233|Exon|1|Ano1|-2.4622662045429|64.9322523521431|3.0230138821824e-14|1.77614913387215e-09|
 
--**Field descriptions:**
+**Field descriptions:**
 
 `GeneID`, `Chr`, `Strand`, `Symbol`: Gene details\
 `Start`, `End`: Start/end coordinators of exonic/junction regions\
