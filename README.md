@@ -228,8 +228,8 @@ topSpliceDGE(sp, test="exon")
 **Field descriptions:**
 
 `GeneID`, `Chr`, `Strand`, `Symbol`: Gene details\
-`Start`, `End`: Start/end coordinators of exonic/junction regions\
 `Region`: Whether the region is junction or exon\
+`Start`, `End`: If region is exon, start/end coordinator of that exonic region; If region is junction, position of two splice sites of that junction\
 `annotated`: whether exon/junction is annotated or novel\
 `logFC`: log2 fold-change of one exon vs all the exons for the same gene\
 `exon.F`: F-statistics for exon/junction\
