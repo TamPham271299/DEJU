@@ -45,14 +45,14 @@ DEJU/
 
 ### DEJU workflow
 
-1. Exon-junction read mapping (STAR splice-aware aligners)
+#### 1. Exon-junction read mapping (STAR splice-aware aligners)
 
 Input files:
 Output files:
 
-2. Exon-junction read quantification (Rsubread featureCounts)
+#### 2. Exon-junction read quantification (Rsubread featureCounts)
 
-Input files:
+**Input files:**
 
 ```r
 count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
@@ -62,17 +62,15 @@ count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
                                   juncCounts=TRUE # quantify exon-exon junction reads)
 ```
 
-Output files:
+**Output files:**
 
-Internal exon counts are stored in `count$counts` object
+Internal exon counts are stored in `count$counts` object\
+Exon-exon junction counts are stored in `count$counts_junction` object\
+Final count matrix (internal exon + junction counts) will be stored in `final_count` object\
 
-Exon-exon junction counts are stored in `count$counts_junction object
+#### 3. Differential exon-junction usage (edgeR diffSpliceDGE)
 
-Final count matrix (internal exon + junction counts) will be stored in `final_count` object
-
-3. Differential exon-junction usage (edgeR diffSpliceDGE)
-
-   - Input files: `final_count` (exon-junction counts), `annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
+**Input files:** `final_count` (exon-junction counts), `annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
 
 ```r
 message("Constructing DGElist object ...")  
@@ -99,7 +97,7 @@ DEU_F <- topSpliceDGE(sp, test="gene", number=Inf)
 DEU_exon <- topSpliceDGE(sp, test="exon", number=Inf)
 ```
 
-Output files:
+**Output files:**
 Results provides ranked genes or exons by evidence for differential splicing, based on sorted adjusted p-values. 
 The exon-level tests test for differences between each exon and all the exons for the same gene. 
 The gene-level tests test for any differences in exon usage between experimental conditions. 
@@ -108,7 +106,7 @@ It returns the minimum Simes-adjusted p-values for each gene.
 The gene-level tests are likely to be powerful for genes in which several exons are differentially splices. 
 The Simes p-values is likely to be more powerful when only a minority of the exons for a gene are differentially spliced. 
 
-**DEU genes from gene-level Simes test**
+- DEU genes from gene-level Simes test
 
 |GeneID|Chr|Strand|Symbol|NExons|P.Value|FDR|
 |----|----|----|----|----|----|----|
@@ -124,7 +122,7 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 `P.value`: p-value of Simes test\
 `FDR`: False discovery rate
 
-**DEU genes from gene-level F-test**
+- **DEU genes from gene-level F-test**
 
 |GeneID|Chr|Strand|Symbol|NExons|gene.F|P.Value|FDR|
 |----|----|----|----|----|----|----|----|
