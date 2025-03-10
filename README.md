@@ -10,6 +10,8 @@ The paper introduced a DEJU analysis workflow implementing a STAR-Rsubread-edgeR
 
 The paper also benchmarked the DEJU analysis methods implemented in edgeR and limma (DEJU-edgeR, DEJU-limma) against the existing DEU analysis methods (DEU-edgeR, DEU-limma) and other popular R-based DEU/DEJU tools (DEXSeq, JunctionSeq) based on simulated RNA-seq datasets. We also performed DEU analysis on RNA-sequencing experiments of [NCBI GEO database (GSE227748)](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE227748) using our proposed method and other DEU analysis pipelines benchmarked in the study.
 
+### Results and conclusion
+
 By incorporating exon-exon junction reads, our DEJU methods demonstrates higher performance over other benchmarked methods in FDR control, statistical power, computational efficiency (turnaround time + memory usage), and flexibility in detecting a broad range of AS events, notably alternative splice sites and intron retention, making it the most suitable candidate for DEJU analysis in RNA-seq data.
 In practical applications, our DEJU method effectively handles splicing alterations involving multiple known and novel transcripts, while supporting complex experimental designs. However, it is not recommended for non-model organisms with the incomplete reference genome and does not provide transcript-level abundance estimates.
 
@@ -53,9 +55,11 @@ Output files:
 Input files:
 
 ```r
-count <- Rsubread::featureCounts(BAM_files, annot.ext=flat_exon.tsv, useMetaFeatures=FALSE,
-                                  nonSplitOnly=TRUE, splitOnly=FALSE,
-                                  juncCounts=TRUE)
+count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
+                                  annot.ext=flat_exon.tsv, # merged and flattened exon annotation
+                                  useMetaFeatures=FALSE, # summarize exon-level reads
+                                  nonSplitOnly=TRUE, splitOnly=FALSE, # quantify internal exon reads
+                                  juncCounts=TRUE # quantify exon-exon junction reads)
 ```
 
 Output files:
