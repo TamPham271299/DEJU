@@ -50,30 +50,18 @@ We provide basic steps of our DEJU-edgeR method
 #### 0. Reference genome
 
 Genomic annotation `genome.gtf` and genomic sequence `genome.fasta` of the reference genome.
+To generate flattened and merged exon annotation, please visit DEJU/code/annotation_dl/GTF2SAF.R
+To generate junction database, please visit DEJU/code/annotation_dl/GTF2SJdatabase.R
 
-```r
-library(Rubread)
-
-message('Generating flattened and merged exon annotation from reference genome GTF ...')
-flat_exon <- flattenGTF(genome.gtf, method='merge')
-
-message('Generate junction database from reference genome GTF ...')
-junc_db <- 
-```
-
-#### 1. Exon-junction read mapping (STAR splice-aware aligners)
+#### 1. Exon-junction read mapping with 2-pass mapping using STAR
 
 **Input:** `genome.gtf`, `genome.fasta`, `sample1_gr1_R1.fq`, `sample1_gr1_R2.fq`, `sample2_gr1_R1.fq`,  `sample2_gr1_R2.fq`, `sample1_gr2_R1.fq`, `sample1_gr2_R2.fq`, `sample2_gr2_R1.fq`, `sample2_gr2_R2.fq`
-
-```bash
-
-```
 
 **Output:** `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
 
 #### 2. Exon-junction read quantification (Rsubread featureCounts)
 
-**Input:** `flat_exon`, `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
+**Input:** `flat_exon` (Flattened and merged exon annotation), `SJ_database` (Junction database), `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
 
 ```r
 library(Rsubread)
@@ -89,32 +77,70 @@ count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
                                   isPairedEnd=FALSE # is paired-end?)
 
 message('Internal exon count and annotation ...')
-IE_count <-
-IE_annot <-
+IE_count <- count$counts
+IE_annot <- cbind(count$annotation, Region="Exon", annotated=1)
 
 message('Exon-exon junction count and annotation ...')
-J_count <-
-J_annot <-
+J_count <- count$counts_junction[!is.na(count$counts_junction$PrimaryGene),]
+J_count$juncID <- paste(J_count$Site1_chr, 
+                        J_count$Site1_location,
+                        J_count$Site2_location,
+                        sep="_")
+
+message('Junction reannotation using junction database ...')
+uniq_SJ <- SJ_database[SJ_database$freq==1,]
+m1 <- match(J_count$juncID, uniq_SJ$juncID)
+J_count$PrimaryGene <- ifelse(!is.na(m1), uniq_SJ$geneID[m1], J_count$PrimaryGene)
+
+message("Whether junctions are annotated or not ...")
+m2 <- match(J_count$juncID, SJ_database$juncID)
+J_count$annotated <- ifelse(!is.na(m2), 1, 0)
+
+message("Processing final junction count table ...")
+J_annot <- data.frame(
+  GeneID=J_count$PrimaryGene,
+  Chr=J_count$Site1_chr,
+  Start=J_count$Site1_location,
+  End=J_count$Site2_location
+)
+m <- match(J_annot$GeneID, IE_annot$GeneID)
+Strand <- IE_annot$Strand[m]
+J_annot <- cbind(J_annot, Strand=Strand, Length=1, Region="Junction", annotated=J_count$annotated)
+J_count <- data.frame(J_count[, 9:(ncol(J_count)-2)], row.names = NULL, check.names = FALSE)
 
 message('Combine internal exon counts and junction counts into an exon-junction count table ...')
-IE_J_count <- 
-IE_J_annot <- 
+IE_J_count <- rbind(IE_count, J_count)
+IE_J_annot <- rbind(IE_annot, J_annot)
 ```
 
 **Output:**
 
-Internal exon counts are stored in `count$counts` object
+Exon-junction count table and annotation is stored in `IE_J_count` and `IE_J_annot` object.
 
-Internal exon counts are stored in `count$annotation` object
+For example:
+`IE_J_count` contains counts of each feature (exon/junction) with each column representing each sample
+```tsv
+7587  5384  6408  6617
+732  567  731  709
+329  268  282  294
+1  0  0  0
+595  479  491  610
+5  5  0  1
+```
 
-Exon-exon junction counts are stored in `count$counts_junction` object
-
-Exon-junction count table (internal exon + junction counts) is stored in `IE_J_count` object
-Associated exon-junction annotation (internal exon + junction counts) is stored in `IE_J_annot` object
+`IE_J_annot` contains 8 columns: GeneID, Chr, Start, End, Strand, Length, Region, Annotated, which provides genomic information for each feature above.
+```tsv
+ENSMUSG00000000001.5  chr3  108014596  108016632  -  2037  Exon  1
+ENSMUSG00000000001.5  chr3  108016719  108016928  -  210  Exon  1
+ENSMUSG00000000001.5  chr3  108019251  108019404  -  154  Exon  1
+ENSMUSG00000000001.5  chr3  108016623  108016719  -  1  Junction  0
+ENSMUSG00000000001.5  chr3  108016632  108016719  -  1  Junction  1
+ENSMUSG00000000001.5  chr3  108016632  108019251  -  1  Junction  0
+```
 
 #### 3. Differential exon-junction usage (edgeR diffSpliceDGE)
 
-**Input:** `final_count` (exon-junction counts), `annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
+**Input:** `IE_J_count` (exon-junction counts), `IE_J_annot` (exon-junction annotation), `group` (group details), `contr` (contrast matrix), `design` (design matrix)
 
 ```r
 library(edgeR)
