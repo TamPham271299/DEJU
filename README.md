@@ -53,13 +53,13 @@ Genomic annotation `genome.gtf` and genomic sequence `genome.fasta` of the refer
 To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R`\
 To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R`
 
-#### 1. Exon-junction read mapping with 2-pass mapping (STAR)
+#### 1. Exon-junction read mapping with 2-pass mode (STAR)
 
 **Input:** `genome.gtf`, `genome.fasta`, `sample1_gr1_R1.fq`, `sample1_gr1_R2.fq`, `sample2_gr1_R1.fq`,  `sample2_gr1_R2.fq`, `sample1_gr2_R1.fq`, `sample1_gr2_R2.fq`, `sample2_gr2_R1.fq`, `sample2_gr2_R2.fq`
 
 **Output:** `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
 
-Please visit DEJU/code/alignment/ for more details.
+Please visit `DEJU/code/alignment/` for more details.
 
 #### 2. Exon-junction read quantification (Rsubread featureCounts)
 
