@@ -164,9 +164,6 @@ fit <- glmQLFit(y, design, robust=TRUE)
 
 message("Running diffSpliceDGE ..")
 sp <- diffSpliceDGE(fit, contrast=contr, geneid="GeneID", exonid="Start")
-DEU_simes <- topSpliceDGE(sp, test="Simes", number=Inf)
-DEU_F <- topSpliceDGE(sp, test="gene", number=Inf)
-DEU_exon <- topSpliceDGE(sp, test="exon", number=Inf)
 ```
 
 **Output:**
@@ -179,7 +176,9 @@ The gene-level tests are likely to be powerful for genes in which several exons 
 The Simes p-values is likely to be more powerful when only a minority of the exons for a gene are differentially spliced. 
 
 - **DEU genes from gene-level Simes test**
-
+```r
+topSpliceDGE(sp, test="Simes", number=Inf)
+```
 |GeneID|Chr|Strand|Symbol|NExons|P.Value|FDR|
 |----|----|----|----|----|----|----|
 |ENSMUSG00000028337.15|chr4|-|Coro2a|27|5.63409202936316e-18|7.44150875238286e-14|
@@ -195,7 +194,9 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 `FDR`: False discovery rate
 
 - **DEU genes from gene-level F-test**
-
+```r
+topSpliceDGE(sp, test="gene", number=Inf)
+```
 |GeneID|Chr|Strand|Symbol|NExons|gene.F|P.Value|FDR|
 |----|----|----|----|----|----|----|----|
 |ENSMUSG00000035202.9|chr9|+|Lars2|35|16.1933702582295|1.11593822152576e-34|1.47393120299123e-30|
@@ -212,7 +213,9 @@ The Simes p-values is likely to be more powerful when only a minority of the exo
 `FDR`: False discovery rate
 
 - **Differentially used exons and splice junctions from exon-level test**
-
+```r
+topSpliceDGE(sp, test="exon", number=Inf)
+```
 |GeneID|Chr|Start|End|Strand|Length|Region|annotated|Symbol|logFC|exon.F|P.Value|FDR|
 |----|----|----|----|----|----|----|----|----|----|----|----|----|
 |ENSMUSG00000028337.15|chr4|46576626|46581702|-|1|Junction|0|Coro2a|2.23199936023307|118.83727786305|2.08670075161598e-19|4.90410150542534e-14|
