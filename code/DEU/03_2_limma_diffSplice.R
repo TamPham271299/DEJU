@@ -120,6 +120,33 @@ reassign_SJ <- function(J_count, SJ_database) {
   return(J_count) 
 }
 
+process_J_count <- function(featureCounts_o, SJ_database) {
+  
+  message("Analyzing junction read counts ...")
+  J_count <- read.table(paste0(featureCounts_o, "junction_count.tsv"), header=TRUE)
+  J_count$juncID <- paste(J_count$Site1_chr, 
+                          J_count$Site1_location, 
+                          J_count$Site2_location, 
+                          sep="_")
+  
+  message("Re-assigning junctions to correct genes using junction database ...")
+  J_count <- reassign_SJ(J_count, SJ_database)
+  
+  message("Processing final junction count table ...")
+  J_annot <- data.frame(
+    GeneID=J_count$PrimaryGene,
+    Chr=J_count$Site1_chr,
+    Start=J_count$Site1_location,
+    End=J_count$Site2_location
+  )
+  
+  J_annot <- cbind(J_annot, Length=1, Region="Junction", annotated=J_count$annotated)
+  J_count <- data.frame(J_count[, 9:(ncol(J_count)-2)], row.names = NULL, check.names = FALSE)
+  
+  return(list('J_count'=J_count,
+              'J_annot'=J_annot))
+}
+
 process_IE_J_count <- function(featureCounts_o, SJ_database) {
   
   message("Analyzing internal exon read counts ...")
@@ -346,7 +373,15 @@ if (mode == "simulation") {
     DEU_fit <- DEU_analysis(E$E_count,
                             E$E_annot,
                             mat$group, mat$design, mode, REF)
+
+    message("Constructing a matrix for only junction read counts ...")
+    J <- process_J_count(featureCounts_o, SJ_database)
     
+    message("Starting DEU analysis for onlyJunc-edgeR ...")
+    onlyJunc_fit <- DEU_analysis(J$J_count,
+                                 J$J_annot,
+                                 mat$group, mat$design, mode, REF)
+
     message("Combining internal exon and junction read count matrix ...")  
     IE_J <- process_IE_J_count(featureCounts_o, SJ_database)
     
@@ -358,7 +393,10 @@ if (mode == "simulation") {
     setwd(DEU_analysis_o)
     message("Running diffSplice for DEU-limma ...")
     res <- DEU_res(DEU_fit, mat$design, pair, "DEU", fdr_cutoff, mode)  
-    
+
+    message("Running diffSplice for junc-limma ...")
+    res <- DEU_res(onlyJunc_fit, mat$design, pair, "onlyJunc", fdr_cutoff, mode)  
+
     message("Running diffSplice for DEJU-limma ...")
     res <- DEU_res(DEJU_fit, mat$design, pair, "DEJU", fdr_cutoff, mode)  
     setwd(wd)
