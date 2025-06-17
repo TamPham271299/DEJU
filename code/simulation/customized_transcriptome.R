@@ -202,3 +202,266 @@ AS_info <- data.frame(gene=c(ES, MXE, ASS, RI),
                              rep("ASS", length(ASS)), 
                              rep("RI", length(RI))))
 write.table(AS_info, "DEU_genes.info.tsv", sep="\t", quote=FALSE, row.names=FALSE)
+
+######################################################################################
+# # Customized transcriptome with 5 transcripts per gene
+
+# library(dplyr)
+# library(Rsubread)
+
+# dir.create("../../data/simulation/customized_transcriptome",
+#            recursive = T,
+#            showWarnings = F)
+# setwd("../../data/simulation/customized_transcriptome")
+
+# message('Merging and flattening exon regions using flattenGTF ...')
+# GTF <- "../../../annotation/gencode.vM32.PC.annotation.gtf.gz"
+# SAF <- flattenGTF(GTF, GTF.featureType="exon", GTF.attrType="gene_id", method="merge")
+
+# message('Converting 1-based GTF into 0-based BED ...')
+# BED <- SAF %>%
+#   group_by(GeneID) %>%
+#   # calculate blockSizes and blockStarts of exons
+#   mutate(Start = Start - 1, blockSizes = End - Start, blockStarts = Start - min(Start)) %>% 
+#   ungroup()
+
+# message('Removing duplicated genes with flattened exons ...')
+# ds_f <- paste0("../../../annotation/duplicated_sequences.tsv") 
+# ds <- read.table(ds_f, header=FALSE)
+# BED <- BED[!(BED$GeneID %in% ds$V1),]
+
+# message('Extracting genes with at least 5 exons ...')
+# genes <- table(BED$GeneID) 
+# BED <- BED[BED$GeneID %in% names(genes[genes>=5]), ]
+
+# set.seed(2025)
+
+# message('Randomly selecting 5000 genes ...')
+# genes <- sample(unique(BED$GeneID), 5000, replace=FALSE)
+
+# message('Randomly spliting 5000 genes into 3 equal parts ...')
+# ES <- sample(genes, 1250, replace=FALSE)
+
+# MXE <- sample(genes[!(genes %in% ES)], 1250, replace=FALSE)
+
+# ASS <- sample(genes[!(genes %in% c(ES, MXE))], 1250, replace=FALSE)
+
+# IR <- genes[!(genes %in% c(ES, MXE, ASS))]
+
+# message('Function to build ES isoforms ...')
+# generate_ES_isoforms <- function(gene, saf, n_isoforms = 5) {
+#   set.seed(2025)
+#   exons <- saf[saf$GeneID == gene, c("Chr", "Start", "End", "Strand", "GeneID")]
+#   n <- nrow(exons)
+#   df <- data.frame(exons, isoformID=gene, AS_type="ES")
+#   seen_key <- c()
+  
+#   for (i in 1:(n_isoforms-1)) {
+#     r <- 1
+#     repeat {
+#       key <- sample(1:n, 1)  # skip 1 exons
+      
+#       # Ensure this pattern hasn't been used
+#       if (!(key %in% seen_key)) {
+#         seen_key <- c(seen_key, key)
+#         break
+#       }
+#       r <- r + 1
+#       if (r > 100) stop("Too many attempts to find unique exon skip pattern.")
+#     }
+    
+#     ID <- paste0(gene, ".skip_exon.", key)
+    
+#     tmp_df <- exons[-key, ]
+#     tmp_df$isoformID <- ID
+#     tmp_df$AS_type <- "ES"
+    
+#     df <- rbind(df, tmp_df)
+#   }
+  
+#   return(df)
+# }
+
+# generate_MXE_isoforms <- function(gene, saf, n_isoforms = 5) {
+#   set.seed(2025)
+#   exons <- saf[saf$GeneID == gene, c("Chr", "Start", "End", "Strand", "GeneID")]
+#   n <- nrow(exons)
+#   df <- data.frame()
+#   seen_key <- c()
+  
+#   for (i in 1:n_isoforms) {
+#     r <- 1
+#     repeat {
+#       key <- sample(1:n, 1)  # Skip 1 exon
+      
+#       # Ensure this pattern hasn't been used
+#       if (!(key %in% seen_key)) {
+#         seen_key <- c(seen_key, key)
+#         break
+#       }
+#       r <- r + 1
+#       if (r > 100) stop("Too many attempts to find unique exon skip pattern.")
+#     }
+    
+#     ID <- paste0(gene, ".skip_exon.", key)
+    
+#     tmp_df <- exons[-key, ]
+#     tmp_df$isoformID <- ID
+#     tmp_df$AS_type <- "MXE"
+    
+#     df <- rbind(df, tmp_df)
+#   }
+  
+#   return(df)
+# }
+
+# message('Function to build ASS isoforms ...')
+# generate_ASS_isoforms <- function(gene, saf, n_isoforms = 5) {
+#   set.seed(2025)
+#   exons <- saf[saf$GeneID == gene, c("Chr", "Start", "End", "Strand", "GeneID")]
+#   n <- nrow(exons)
+#   df <- data.frame(exons, isoformID=gene, AS_type="ASS")
+#   seen_keys <- c()
+  
+#   for (i in 1:(n_isoforms-1)) {
+#     r <- 1
+#     repeat {
+#       key <- sample(2:n, 1) # Except 1st and last exon
+#       if (!(key %in% seen_keys)) {
+#         seen_keys <- c(seen_keys, key)
+#         break
+#       }
+#       r <- r + 1
+#       if (r > 100) stop("Too many duplicate ASS patterns.")
+#     }
+
+#     selected_exon <- exons[key, ]
+    
+#     # Apply a random fraction shift to start or end
+#     random_fraction <- sample(c(0.3, 0.4, 0.5, 0.6, 0.7), 1)
+#     exon_length <- selected_exon$End - selected_exon$Start
+#     delta <- round(exon_length * random_fraction)
+    
+#     new_start <- selected_exon$Start + delta
+#     selected_exon$Start <- new_start
+    
+#     ID <- paste0(gene, ".splice_site_at_exon.", key)
+    
+#     tmp_df <- exons
+#     tmp_df[key, ] <- selected_exon
+#     tmp_df$isoformID <- ID
+#     tmp_df$AS_type <- "ASS"
+    
+#     df <- rbind(df, tmp_df)
+#   }
+  
+#   return(df)
+# }
+
+# message('Function to build IR isoforms ...')
+# generate_IR_isoforms <- function(gene, saf, n_isoforms = 5) {
+#   set.seed(2025)
+#   exons <- saf[saf$GeneID == gene, c("Chr", "Start", "End", "Strand", "GeneID")]
+#   n <- nrow(exons)
+#   df <- data.frame(exons, isoformID=gene, AS_type="IR")
+#   seen_keys <- c()
+  
+#   for (i in 1:(n_isoforms-1)) {
+#     r <- 1
+#     repeat {
+#       # Pick 1 or 2 introns to retain (indices 1 to n-1)
+#       key <- sample(1:(n - 1), 1)
+#       if (!(key %in% seen_keys)) {
+#         seen_keys <- c(seen_keys, key)
+#         break
+#       }
+#       r <- r + 1
+#       if (r > 100) stop("Too many duplicate IR patterns.")
+#     }
+    
+#     ID <- paste0(gene, ".retained_intron.", key)
+    
+#     retained_exons <- list()
+#     skip_idxs <- c()
+    
+#     exon1 <- exons[key, ]
+#     exon2 <- exons[key + 1, ]
+#     merged <- exon1
+#     merged$Start <- exon1$Start
+#     merged$End <- exon2$End
+#     retained_exons[[length(retained_exons) + 1]] <- merged
+    
+#     # Remove all original exons involved in IR
+#     keep_rows <- setdiff(1:n, c(key, key+1))
+#     final_df <- exons[keep_rows, ]
+    
+#     # Add retained (merged) exons
+#     final_df <- rbind(final_df, merged)
+#     final_df <- final_df[order(final_df$Start), ]
+    
+#     # Add metadata
+#     final_df$isoformID <- ID
+#     final_df$AS_type <- "IR"
+    
+#     df <- rbind(df, final_df)
+#   }
+  
+#   return(df)
+# }
+
+# ### Generate 5 isoforms
+# ### ES
+# ES_df <- do.call(rbind, lapply(ES, function(g) {
+#   generate_ES_isoforms(gene = g, saf = BED, n_isoforms = 5)
+# }))
+
+# ### MXE
+# MXE_df <- do.call(rbind, lapply(MXE, function(g) {
+#   generate_MXE_isoforms(gene = g, saf = BED, n_isoforms = 5)
+# }))
+
+# ### ASS
+# ASS_df <- do.call(rbind, lapply(ASS, function(g) {
+#   generate_ASS_isoforms(gene = g, saf = BED, n_isoforms = 5)
+# }))
+
+# ### IR
+# IR_df <- do.call(rbind, lapply(IR, function(g) {
+#   generate_IR_isoforms(gene = g, saf = BED, n_isoforms = 5)
+# }))
+
+# ES_df_final <- ES_df %>%
+#   group_by(isoformID) %>%
+#   mutate(blockSizes = End - Start, blockStarts = Start - min(Start)) %>% 
+#   ungroup()
+
+# MXE_df_final <- MXE_df %>%
+#   group_by(isoformID) %>%
+#   mutate(blockSizes = End - Start, blockStarts = Start - min(Start)) %>% 
+#   ungroup()
+
+# ASS_df_final <- ASS_df %>%
+#   group_by(isoformID) %>%
+#   mutate(blockSizes = End - Start, blockStarts = Start - min(Start)) %>% 
+#   ungroup()
+
+# IR_df_final <- IR_df %>%
+#   group_by(isoformID) %>%
+#   mutate(blockSizes = End - Start, blockStarts = Start - min(Start)) %>% 
+#   ungroup()
+
+# message('Save metadata ...')
+# write.table(ES_df_final, "ES_5tr.pre.bed12.tsv", sep="\t", quote=FALSE, row.names=FALSE)
+# write.table(MXE_df_final, "MXE_5tr.pre.bed12.tsv", sep="\t", quote=FALSE, row.names=FALSE)
+# write.table(ASS_df_final, "ASS_5tr.pre.bed12.tsv", sep="\t", quote=FALSE, row.names=FALSE)
+# write.table(IR_df_final, "IR_5tr.pre.bed12.tsv", sep="\t", quote=FALSE, row.names=FALSE)
+
+# AS_info <- data.frame(gene=c(unique(ES_df$GeneID), 
+#                              unique(MXE_df$GeneID),
+#                              unique(ASS_df$GeneID), 
+#                              unique(IR_df$GeneID)), 
+#                       type=c(rep("ES", length(unique(ES_df$GeneID))),
+#                              rep("MXE", length(unique(MXE_df$GeneID))),
+#                              rep("ASS", length(unique(ASS_df$GeneID))), 
+#                              rep("RI", length(unique(IR_df$GeneID)))))
+# write.table(AS_info, "DEU_genes_5tr.info.tsv", sep="\t", quote=FALSE, row.names=FALSE)
