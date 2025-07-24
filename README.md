@@ -21,7 +21,7 @@ In practical applications, our DEJU method effectively handles splicing alterati
 
 If you are using code or pipelines from this repository, please consider citing our associated article:
 
-Pham, M.T., Milevskiy, M.J.G., Visvader, J.E. et al. Incorporating exon–exon junction reads enhances differential splicing detection. BMC Bioinformatics 26, 193 (2025). [https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE227748](https://doi.org/10.1186/s12859-025-06210-4)
+Pham, M.T., Milevskiy, M.J.G., Visvader, J.E. et al. Incorporating exon–exon junction reads enhances differential splicing detection. BMC Bioinformatics 26, 193 (2025). [https://doi.org/10.1186/s12859-025-06210-4](https://doi.org/10.1186/s12859-025-06210-4)
 
 ### Repository Structure
 
