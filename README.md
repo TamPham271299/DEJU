@@ -47,13 +47,15 @@ DEJU/
 
 ### DEJU workflow tutorial
 
-In this example, we provide basic steps of our DEJU-edgeR method to $detect DEU genes from paired-end RNA-seq data for 2 groups with 2 biological replicates$ (e.g `sample1_G1`, `sample2_G1`, `sample1_G2`, `sample2_G2`).\
+In this example, we provide basic steps of our DEJU-edgeR method to detect DEU genes from paired-end RNA-seq data for 2 groups with 2 biological replicates (e.g `sample1_G1`, `sample2_G1`, `sample1_G2`, `sample2_G2`).\
 We can also apply this pipeline for single-end RNA-seq data.\
 More replicates we have, higher sensitivity and specificity we get for the differential splicing detection result.
 
 #### 0. Reference genome
 
 First, we download genomic annotation `hg38.genome.gtf` and genomic sequence `hg38.genome.fasta` of the reference genome (e.g., from Gencode, UCSC database).\
+Note: In this tutorial, we use genomic human annotation hg38 from the Gencode database.\
+We can download latest version of FASTA and GTF of hg38 from [https://www.gencodegenes.org/human/](https://www.gencodegenes.org/human/).\
 To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R` for more details.\
 To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R` for more details.
 
@@ -64,7 +66,7 @@ To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatab
 library(Rsubread)
 
 # convert GTF to SAF
-SAF <- flattenGTF("gencode.vM32.annotation.gtf", 
+SAF <- flattenGTF("hg38.genome.gtf", 
                   GTF.featureType="exon", 
                   GTF.attrType="gene_id", 
                   method="merge")
@@ -139,7 +141,7 @@ STAR --runThreadN 16 \
           --sjdbGTFfile hg38.genome.gtf \           
           --sjdbOverhang $sjdbOverhang
 
-# 1-pass mapping
+# Per-sample 1-pass mapping
 mkdir aligned_pass1
 STAR --genomeDir $genomeDir \
                 --readFilesIn trimmed/sample1_G1_R1.fastq.gz trimmed/sample1_G1_R2.fastq.gz \
@@ -148,13 +150,14 @@ STAR --genomeDir $genomeDir \
                 --outSAMtype BAM SortedByCoordinate \
                 --runThreadN 16
 
-# SJ filtering (Manually filtering junctions supported by less than 3 UMRs to reduce false positive junctions)
+# After running alignment for 4 samples, then
+# SJ filtering for 4 samples (Manually filtering junctions  supported by less than 3 UMRs to reduce false positive junctions)
 mkdir SJ
 cp aligned_pass1/*/*SJ.out.tab SJ
 cat $DIR/SJ/*.SJ.out.tab | \
   awk '($7 >= 3 && $5 > 0)'| cut -f1-6| sort| uniq > SJ/merged_UMR_3.SJ.tab
 
-# Genome re-indexing
+# Genome re-indexing with the filtered set of SJ
 # Note: Run for all samples across group comparisons
 mkdir reindexed_genome
 STAR --runThreadN 16 \
@@ -164,7 +167,7 @@ STAR --runThreadN 16 \
             --sjdbOverhang $sjdbOverhang \
             --sjdbFileChrStartEnd SJ/merged_UMR_3.SJ.tab
 
-# 2-pass mapping
+# per-sample 2-pass mapping
 STAR --genomeDir reindexed_genome \
                     --readFilesIn trimmed/sample1_G1_R1.fastq.gz trimmed/sample1_G1_R2.fastq.gz \
                     --readFilesCommand zcat \
@@ -173,6 +176,8 @@ STAR --genomeDir reindexed_genome \
                     --outFilterType BySJout \
                     --outFilterIntronMotifs RemoveNoncanonical \
                     --runThreadN 16
+
+# At the end, we have BAM file for each sample after 2-mapping pass
 ```
 
 Please visit `DEJU/code/alignment/` for more details.
