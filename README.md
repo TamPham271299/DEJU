@@ -54,7 +54,7 @@ More replicates we have, higher sensitivity and specificity we get for the diffe
 #### 0. Reference genome
 
 First, we download genomic annotation `hg38.genome.gtf` and genomic sequence `hg38.genome.fasta` of the reference genome (e.g., from Gencode, UCSC database).\
-Note: In this tutorial, we use genomic human annotation hg38 from the Gencode database.\
+$$Note:$$ In this tutorial, we use genomic human annotation hg38 from the Gencode database.\
 We can download latest version of FASTA and GTF of hg38 from [https://www.gencodegenes.org/human/](https://www.gencodegenes.org/human/).\
 To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R` for more details.\
 To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R` for more details.
