@@ -21,7 +21,7 @@ In practical applications, our DEJU method effectively handles splicing alterati
 
 If you are using code or pipelines from this repository, please consider citing our associated article:
 
-Pham, M. T., Milevskiy, M. J. G., Visvader, J. E., Chen, Y. Incorporating exon-exon junction reads enhances differential splicing detection. ...
+Pham, M.T., Milevskiy, M.J.G., Visvader, J.E. et al. Incorporating exon–exon junction reads enhances differential splicing detection. BMC Bioinformatics 26, 193 (2025). https://doi.org/10.1186/s12859-025-06210-4
 
 ### Repository Structure
 
@@ -45,7 +45,7 @@ DEJU/
 └── README.md                  # Main documentation for the repository
 ```
 
-### DEJU workflow
+### An example of DEJU workflow
 
 Here, we provide basic steps of our DEJU-edgeR method to detect DEU genes from paired-end RNA-seq data for 2 groups with 2 biological replicates.
 
@@ -55,11 +55,69 @@ Genomic annotation `genome.gtf` and genomic sequence `genome.fasta` of the refer
 To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R`\
 To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R`
 
-#### 1. Exon-junction read mapping with 2-pass mode (STAR)
+#### 1. FASTQ pre-processing and exon-junction read mapping with 2-pass mode (STAR)
 
 **Input:** `genome.gtf`, `genome.fasta`, `sample1_gr1_R1.fq`, `sample1_gr1_R2.fq`, `sample2_gr1_R1.fq`,  `sample2_gr1_R2.fq`, `sample1_gr2_R1.fq`, `sample1_gr2_R2.fq`, `sample2_gr2_R1.fq`, `sample2_gr2_R2.fq`
 
 **Output:** `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
+
+We recommend run STAR with 2-pass mapping with re-generated genome + manual SJ filtering process like below to get the high mapping quality of exon-exon junction reads.
+
+```bash
+# Run FASTQC + trim reads and adapters (if has not been trimmed)
+fastqc --nogroup -t 16 --dir raw -o raw  $R2 raw/sampleA_R1.fastq.gz raw/sampleA_R2.fastq.gz
+trim_galore --cores 4 -q 30 --length 20 --paired --fastqc_args "--nogroup" --output_dir trimmed raw/sampleA_R1.fastq.gz raw/sampleA_R2.fastq.gz
+# Then, we can rename trimmed fastq files (often with "*_val_*.fq.gz") into "sampleA_R1.fastq.gz" and "sampleA_R2.fastq.gz" (if paired-end reads)
+# for example, run this:
+for i in `find trimmed -name "*_val_*.fq.gz"`; do mv "$i" "${i/_val_?.fq.gz/.fastq.gz}"; done
+# Then trimmed FASTQ files will be stored in trimmed folder with the name "sampleA_R1.fastq.gz" and "sampleA_R2.fastq.gz"
+
+# Index the reference human genome (e.g. hg38)
+# Note: Only run once for 1 reference genome
+sjdbOverhang=99 # optimal SJ overhang if max read length is 100
+mkdir hg38_idx_genome
+STAR --runThreadN 16 \
+          --runMode genomeGenerate \
+          --genomeDir hg38_idx_genome \
+          --genomeFastaFiles genome_hg38.fasta \
+          --sjdbGTFfile genome_hg38.gtf \           
+          --sjdbOverhang $sjdbOverhang
+
+# 1-pass mapping
+mkdir aligned_pass1
+STAR --genomeDir $genomeDir \
+                --readFilesIn trimmed/sampleA_R1.fastq.gz trimmed/sampleA_R2.fastq.gz \
+                --readFilesCommand zcat \
+                --outFileNamePrefix  aligned_pass1/sampleA. \
+                --outSAMtype BAM SortedByCoordinate \
+                --runThreadN 16
+
+# SJ filtering (Manually filtering junctions supported by less than 3 UMRs to reduce false positive junctions)
+mkdir SJ
+cp aligned_pass1/*/*SJ.out.tab SJ
+cat $DIR/SJ/*.SJ.out.tab | \
+  awk '($7 >= 3 && $5 > 0)'| cut -f1-6| sort| uniq > SJ/merged_UMR_3.SJ.tab
+
+# Genome re-indexing
+# Note: Run for all samples across group comparisons
+mkdir reindexed_genome
+STAR --runThreadN 16 \
+            --runMode genomeGenerate \
+            --genomeDir reindexed_genome \
+            --genomeFastaFiles genome_hg38.fasta \
+            --sjdbOverhang $sjdbOverhang \
+            --sjdbFileChrStartEnd SJ/merged_UMR_3.SJ.tab
+
+# 2-pass mapping
+STAR --genomeDir reindexed_genome \
+                    --readFilesIn trimmed/sampleA_R1.fastq.gz trimmed/sampleA_R2.fastq.gz \
+                    --readFilesCommand zcat \
+                    --outFileNamePrefix aligned_pass2/sampleA. \
+                    --outSAMtype BAM SortedByCoordinate \
+                    --outFilterType BySJout \
+                    --outFilterIntronMotifs RemoveNoncanonical \
+                    --runThreadN 16
+```
 
 Please visit `DEJU/code/alignment/` for more details.
 
