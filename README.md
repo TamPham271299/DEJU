@@ -21,7 +21,7 @@ In practical applications, our DEJU method effectively handles splicing alterati
 
 If you are using code or pipelines from this repository, please consider citing our associated article:
 
-Pham, M.T., Milevskiy, M.J.G., Visvader, J.E. et al. Incorporating exon–exon junction reads enhances differential splicing detection. BMC Bioinformatics 26, 193 (2025). https://doi.org/10.1186/s12859-025-06210-4
+Pham, M.T., Milevskiy, M.J.G., Visvader, J.E. et al. Incorporating exon–exon junction reads enhances differential splicing detection. BMC Bioinformatics 26, 193 (2025). [https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE227748](https://doi.org/10.1186/s12859-025-06210-4)
 
 ### Repository Structure
 
@@ -47,14 +47,13 @@ DEJU/
 
 ### DEJU workflow tutorial
 
-In this example, we provide basic steps of our DEJU-edgeR method to $detect DEU genes from paired-end RNA-seq data for 2 groups with 2 biological replicates$ (e.g sample1_G1, sample2_G1, sample1_G2, sample2_G2).
-We can also apply this pipeline for single-end RNA-seq data.
+In this example, we provide basic steps of our DEJU-edgeR method to $detect DEU genes from paired-end RNA-seq data for 2 groups with 2 biological replicates$ (e.g `sample1_G1`, `sample2_G1`, `sample1_G2`, `sample2_G2`).\
+We can also apply this pipeline for single-end RNA-seq data.\
 More replicates we have, higher sensitivity and specificity we get for the differential splicing detection result.
 
 #### 0. Reference genome
 
-Download genomic annotation `hg38.genome.gtf` and genomic sequence `hg38.genome.fasta` of the reference genome.\
-(e.g., from Gencode, UCSC database)
+First, we download genomic annotation `hg38.genome.gtf` and genomic sequence `hg38.genome.fasta` of the reference genome (e.g., from Gencode, UCSC database).\
 To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R` for more details.\
 To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R` for more details.
 
@@ -372,6 +371,17 @@ wget https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/a
 wget https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/analysis/plotJunc3.R
 ```
 
-```R
+To draw the upper panel of DEJU-edgeR
 
+```R
+source("plotJunc3_diffSpliceDGE.R")
+plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
+```
+
+To draw Sashimi plot (bottom panel), first generate BAM files contain gene regions of interest.
+
+```bash
+```
+
+```R
 ```
