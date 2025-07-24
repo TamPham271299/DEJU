@@ -45,32 +45,89 @@ DEJU/
 └── README.md                  # Main documentation for the repository
 ```
 
-### An example of DEJU workflow
+### DEJU workflow tutorial
 
-Here, we provide basic steps of our DEJU-edgeR method to detect DEU genes from paired-end RNA-seq data for 2 groups with 2 biological replicates.
+In this example, we provide basic steps of our DEJU-edgeR method to $detect DEU genes from paired-end RNA-seq data for 2 groups with 2 biological replicates$ (e.g sample1_G1, sample2_G1, sample1_G2, sample2_G2).
+We can also apply this pipeline for single-end RNA-seq data.
+More replicates we have, higher sensitivity and specificity we get for the differential splicing detection result.
 
 #### 0. Reference genome
 
-Genomic annotation `genome.gtf` and genomic sequence `genome.fasta` of the reference genome.\
-To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R`\
-To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R`
+Download genomic annotation `hg38.genome.gtf` and genomic sequence `hg38.genome.fasta` of the reference genome.\
+(e.g., from Gencode, UCSC database)
+To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R` for more details.\
+To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R` for more details.
 
-#### 1. FASTQ pre-processing and exon-junction read mapping with 2-pass mode (STAR)
+**Input:** `hg38.genome.gtf`, `hg38.genome.fasta`
+**Output:** `hg38.flat_exon.saf`, `hg38.SJdatabase.tsv`
 
-**Input:** `genome.gtf`, `genome.fasta`, `sample1_gr1_R1.fq`, `sample1_gr1_R2.fq`, `sample2_gr1_R1.fq`,  `sample2_gr1_R2.fq`, `sample1_gr2_R1.fq`, `sample1_gr2_R2.fq`, `sample2_gr2_R1.fq`, `sample2_gr2_R2.fq`
+```bash
+library(Rsubread)
 
-**Output:** `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
+# convert GTF to SAF
+SAF <- flattenGTF("gencode.vM32.annotation.gtf", 
+                  GTF.featureType="exon", 
+                  GTF.attrType="gene_id", 
+                  method="merge")
+
+write.table(SAF, "hg38.flat_exon.saf", quote=F, row.names=F, sep="\t")
+
+# Generate junction database for the reference hg38 genome
+library(dplyr)
+library(rtracklayer)
+library(GenomicRanges)
+
+# Getting parameters
+message('Extracting exon information from GTF ...')
+GTF <- import("hg38.genome.gtf")
+exon_dt <- subset(GTF, type == "exon")
+exon_info <- data.frame(chr = seqnames(exon_dt),
+                        start = start(exon_dt),
+                        end = end(exon_dt),
+                        strand = strand(exon_dt),
+                        geneID = mcols(exon_dt)$gene_id,
+                        transcriptID = mcols(exon_dt)$transcript_id)
+
+message('Converting exon annotation SAF to SJ database ...')
+
+SJ <- exon_info %>%
+  group_by(transcriptID) %>%
+  arrange(chr, start, end) %>%
+  mutate(start = lead(start)) %>%
+  slice(-n()) %>%
+  ungroup()
+
+SJ <- SJ[c("geneID", "chr", "end", "start", "strand")]
+colnames(SJ)[3:4] <- c("start", "end")
+SJ$juncID <- paste(SJ$chr, SJ$start, SJ$end, sep="_")
+
+SJ.1 <- SJ %>%
+  group_by(geneID) %>%
+  distinct(juncID, .keep_all = TRUE) %>%
+  ungroup() %>%
+  count(juncID, name = "freq") %>%
+  arrange(geneID, chr, start, end)
+
+write.table(SJ.1, "hg38.SJdatabase.tsv", quote=F, row.names=F, sep="\t")
+```
+#### 1. Per-sample FASTQ pre-processing and exon-junction read mapping with 2-pass mode (STAR)
+
+**Input:** `hg38.genome.gtf`, `hg38.genome.fasta`, `sample1_G1_R1.fastq.gz`, `sample1_G1_R2.fastq.gz`, `sample2_G1_R1.fastq.gz`,  `sample2_G1_R2.fastq.gz`, `sample1_G2_R1.fastq.gz`, `sample1_G2_R2.fastq.gz`, `sample2_G2_R1.fastq.gz`, `sample2_G2_R2.fastq.gz`
+
+**Output:** `sample1_G1.bam`, `sample2_G1.bam`, `sample1_G2.bam`, `sample2_G2.bam`
 
 We recommend run STAR with 2-pass mapping with re-generated genome + manual SJ filtering process like below to get the high mapping quality of exon-exon junction reads.
 
 ```bash
+# For example, two FASTQ files of paired end reads of sample1_G1 are stored in $raw$ folder with the name "sample1_G1_R1.fastq.gz" and "sample1_G1_R2.fastq.gz"
+# R1 and R2 stands for forward and reverse FASTQ reads, respectively
 # Run FASTQC + trim reads and adapters (if has not been trimmed)
-fastqc --nogroup -t 16 --dir raw -o raw  $R2 raw/sampleA_R1.fastq.gz raw/sampleA_R2.fastq.gz
-trim_galore --cores 4 -q 30 --length 20 --paired --fastqc_args "--nogroup" --output_dir trimmed raw/sampleA_R1.fastq.gz raw/sampleA_R2.fastq.gz
-# Then, we can rename trimmed fastq files (often with "*_val_*.fq.gz") into "sampleA_R1.fastq.gz" and "sampleA_R2.fastq.gz" (if paired-end reads)
+fastqc --nogroup -t 16 --dir raw -o raw raw/sample1_G1_R1.fastq.gz raw/sample1_G1_R2.fastq.gz
+trim_galore --cores 4 -q 30 --length 20 --paired --fastqc_args "--nogroup" --output_dir trimmed raw/sample1_G1_R1.fastq.gz raw/sample1_G1_R2.fastq.gz
+# Then, we can rename trimmed fastq files (often with "*_val_*.fq.gz") into "sample1_G1_R1.fastq.gz" and "sample1_G1_R2.fastq.gz" (if paired-end reads)
 # for example, run this:
 for i in `find trimmed -name "*_val_*.fq.gz"`; do mv "$i" "${i/_val_?.fq.gz/.fastq.gz}"; done
-# Then trimmed FASTQ files will be stored in trimmed folder with the name "sampleA_R1.fastq.gz" and "sampleA_R2.fastq.gz"
+# Then trimmed FASTQ files will be stored in trimmed folder with the name "sample1_G1_R1.fastq.gz" and "sample1_G1_R2.fastq.gz"
 
 # Index the reference human genome (e.g. hg38)
 # Note: Only run once for 1 reference genome
@@ -79,16 +136,16 @@ mkdir hg38_idx_genome
 STAR --runThreadN 16 \
           --runMode genomeGenerate \
           --genomeDir hg38_idx_genome \
-          --genomeFastaFiles genome_hg38.fasta \
-          --sjdbGTFfile genome_hg38.gtf \           
+          --genomeFastaFiles hg38.genome.fasta \
+          --sjdbGTFfile hg38.genome.gtf \           
           --sjdbOverhang $sjdbOverhang
 
 # 1-pass mapping
 mkdir aligned_pass1
 STAR --genomeDir $genomeDir \
-                --readFilesIn trimmed/sampleA_R1.fastq.gz trimmed/sampleA_R2.fastq.gz \
+                --readFilesIn trimmed/sample1_G1_R1.fastq.gz trimmed/sample1_G1_R2.fastq.gz \
                 --readFilesCommand zcat \
-                --outFileNamePrefix  aligned_pass1/sampleA. \
+                --outFileNamePrefix  aligned_pass1/sample1_G1. \
                 --outSAMtype BAM SortedByCoordinate \
                 --runThreadN 16
 
@@ -104,15 +161,15 @@ mkdir reindexed_genome
 STAR --runThreadN 16 \
             --runMode genomeGenerate \
             --genomeDir reindexed_genome \
-            --genomeFastaFiles genome_hg38.fasta \
+            --genomeFastaFiles hg38.genome.fasta \
             --sjdbOverhang $sjdbOverhang \
             --sjdbFileChrStartEnd SJ/merged_UMR_3.SJ.tab
 
 # 2-pass mapping
 STAR --genomeDir reindexed_genome \
-                    --readFilesIn trimmed/sampleA_R1.fastq.gz trimmed/sampleA_R2.fastq.gz \
+                    --readFilesIn trimmed/sample1_G1_R1.fastq.gz trimmed/sample1_G1_R2.fastq.gz \
                     --readFilesCommand zcat \
-                    --outFileNamePrefix aligned_pass2/sampleA. \
+                    --outFileNamePrefix aligned_pass2/sample1_G1. \
                     --outSAMtype BAM SortedByCoordinate \
                     --outFilterType BySJout \
                     --outFilterIntronMotifs RemoveNoncanonical \
@@ -123,16 +180,15 @@ Please visit `DEJU/code/alignment/` for more details.
 
 #### 2. Exon-junction read quantification (Rsubread featureCounts)
 
-**Input:** `flat_exon` (Flattened and merged exon annotation), `SJ_database` (Junction database), `sample1_gr1.bam`, `sample2_gr1.bam`, `sample1_gr2.bam`, `sample2_gr2.bam`
+**Input:** `hg38.flat_exon.saf` (Flattened and merged exon annotation), `hg38.SJdatabase.tsv` (Junction database), `sample1_G1.bam`, `sample2_G1.bam`, `sample1_G2.bam`, `sample2_G2.bam`
 
 ```r
 library(Rsubread)
-
-BAM_files <- list(sample1_gr1.bam, sample2_gr1.bam, sample1_gr2.bam, sample2_gr2.bam)
+BAM_files <- list(sample1_G1.bam, sample2_G1.bam, sample1_G2.bam, sample2_G2.bam)
 
 message('Quantify internal exon + exon-exon junction reads ...')
 count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
-                                  annot.ext=flat_exon, # merged and flattened exon annotation
+                                  annot.ext="hg38.flat_exon.saf", # merged and flattened exon annotation
                                   useMetaFeatures=FALSE, # summarize exon-level reads
                                   nonSplitOnly=TRUE, splitOnly=FALSE, # quantify internal exon reads
                                   juncCounts=TRUE # quantify exon-exon junction reads
@@ -150,6 +206,7 @@ J_count$juncID <- paste(J_count$Site1_chr,
                         sep="_")
 
 message('Junction reannotation using junction database ...')
+SJ_database <- read.table("hg38.SJdatabase.tsv", header=T)
 uniq_SJ <- SJ_database[SJ_database$freq==1,]
 m1 <- match(J_count$juncID, uniq_SJ$juncID)
 J_count$PrimaryGene <- ifelse(!is.na(m1), uniq_SJ$geneID[m1], J_count$PrimaryGene)
@@ -295,3 +352,26 @@ topSpliceDGE(sp, test="exon")
 `exon.F`: F-statistics for exon/junction\
 `P.value`: p-value of exon-level test\
 `FDR`: False discovery rate
+
+#### 3. Visualisation of significant gene with differential splicing (DS gene)
+
+Here we provide an example of how DS gene can be visualised.
+
+<p align="center">
+  <img src="figures/FGFR1_DS_gene.png" alt="FGFR1 DS gene" width="400"/>
+</p>
+
+
+Please download the R script below:
+
+```bash
+# If run DEJU-edgeR
+wget https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/analysis/plotJunc3_diffSpliceDGE.R
+
+# If run DEJU-limma
+wget https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/analysis/plotJunc3.R
+```
+
+```R
+
+```
