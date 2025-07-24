@@ -179,11 +179,16 @@ Please visit `DEJU/code/alignment/` for more details.
 
 #### 2. Exon-junction read quantification (Rsubread featureCounts)
 
-**Input:** `hg38.flat_exon.saf` (Flattened and merged exon annotation), `hg38.SJdatabase.tsv` (Junction database), `sample1_G1.bam`, `sample2_G1.bam`, `sample1_G2.bam`, `sample2_G2.bam`
+**Input:** `hg38.flat_exon.saf` (Flattened and merged exon annotation), `hg38.SJdatabase.tsv` (Junction database),\
+`sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`,\
+`sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
 
 ```r
 library(Rsubread)
-BAM_files <- list(sample1_G1.bam, sample2_G1.bam, sample1_G2.bam, sample2_G2.bam)
+BAM_files <- list(sample1_G1.Aligned.sortedByCoord.out.bam,
+                  sample2_G1.Aligned.sortedByCoord.out.bam,
+                  sample1_G2.Aligned.sortedByCoord.out.bam,
+                  sample2_G2.Aligned.sortedByCoord.out.bam)
 
 message('Quantify internal exon + exon-exon junction reads ...')
 count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
@@ -378,10 +383,133 @@ source("plotJunc3_diffSpliceDGE.R")
 plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
 ```
 
-To draw Sashimi plot (bottom panel), first generate BAM files contain gene regions of interest.
+To draw Sashimi plot (bottom panel), first generate annotation file of gene regions and indexed BAM files if not yet
+
+**Input:** `hg38.genome.gtf`, `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
+**Output:** `hg38.genome.genes.bed`, `sample1_G1.Aligned.sortedByCoord.out.bam.bai`, `sample2_G1.Aligned.sortedByCoord.out.bam.bai`, `sample1_G2.Aligned.sortedByCoord.out.bam.bai`, `sample2_G2.Aligned.sortedByCoord.out.bam.bai`
 
 ```bash
+# Prepare gene coordinates from GTF file (have to be downloaded from Gencode to run this code successfully)
+# Otherwise, need to adjust the code accordingly 
+(echo -e "chr\tstart\tend\tgeneID\tscore\tstrand\tgeneSymbol"; \
+  grep -v "^#" hg38.genome.gtf| \
+  awk 'BEGIN {FS=OFS="\t"} {split($9, a, "; ")} {if ($3=="gene") print $1, $4-1, $5, a[1], "0", $7, a[3]}'| \
+  sed -e 's/gene_id "//g' -e 's/gene_name "//g' -e 's/"//g') > hg38.genome.genes.bed
+
+# Index bam files (if not yet)
+# e.g
+# Index BAM files for all 4 samples stored in aligned_pass1 folder
+for SAMPLE in sample1_G1 sample2_G1 sample1_G2 sample2_G2; do
+  echo $SAMPLE
+  BAM="aligned_pass2/${SAMPLE}.Aligned.sortedByCoord.out.bam"
+  samtools index $BAM
+done
 ```
 
+Second, generate BAM files that contain gene regions of interest.
+
+```bash
+# Specify DS gene to visualise and set the upstream/downstream distance (in base pairs) to include before the gene’s start coordinate and after its end coordinate.
+gene="Fgfr1"
+d="1000"
+
+gene_region=$(awk -v g=$gene -v d=$d 'BEGIN {FS=OFS="\t"} {if($7==g) print $1, $2-d, $3+d, $4}' hg38.genome.genes.bed)
+chr=$(echo "$gene_region"| cut -f1)
+start=$(echo "$gene_region"| awk -v d=$d '{print $2-d}')
+end=$(echo "$gene_region"| awk -v d=$d '{print $3+d}')
+position=${chr}:${start}-${end}
+geneID=$(echo "$gene_region"| cut -f4)
+
+mkdir -p ${gene}_${geneID}_${d}
+
+for SAMPLE in sample1_G1 sample2_G1 sample1_G2 sample2_G2; do
+    echo $SAMPLE
+    BAM="aligned_pass2/${SAMPLE}.Aligned.sortedByCoord.out.bam"
+    samtools view -b -h $BAM $position > ${gene}_${geneID}_${d}/${SAMPLE}.${gene}.bam
+    samtools index ${gene}_${geneID}_${d}/${SAMPLE}.${gene}.bam
+done
+```
+
+Lastly, generate Sashimi plots using Gviz for a neat and nice plot\
+(Please refer to [https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html](https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html) for more details.)
+Or, we can also visualise Sashimi plot using IGV.
+
+We can also visit `DEJU/code/analysis/main_figs_codes.R` (section figure 4B) or `DEJU/code/analysis/supp_figs_codes.R` (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
+
 ```R
+library(Gviz)
+options(ucscChromosomeNames=FALSE)
+
+# Load gene information
+# Below is an example to visualise Fgfr1 gene as a DS gene of 2 groups (mouse LP and ML cell types)
+geneSymbol <- "Fgfr1"
+geneID <- "ENSMUSG00000031565.19"
+chr <- "chr8"
+g_from <- 26002669 # first coordinate of gene region
+g_to <- 26066734 # last coordinate of gene region
+z_from <- 26052007 # first coordinate of region to zoom in
+z_to <- 26059369 # last coordinate of region to zoom in
+d <- 1000 # Upstream/Downstream distance to the first/last coordinate of the gene
+
+# Load alignmnent track from bam files
+samples <- c("sample1_G1", "sample2_G1", "sample1_G2", "sample2_G2")
+OUTPUT <- paste0("geneSymbol, "_", geneID, "_", d, "/")
+PE_bam_files <- paste0(OUTPUT, samples, ".", geneSymbol, ".bam")
+
+# Start an alTrack list to store alignment tracks of 4 samples
+alTrack <- list()
+
+for (idx in 1:2) {
+  s <- samples[idx]
+  # set alignment track for sample1_G1 and sample2_G1 (with BLUE color)
+  alTrack[[s]] <- AlignmentsTrack(PE_bam_files[idx], 
+                                  isPaired = TRUE, 
+                                  fill.coverage="blue", 
+                                  col.sashimi="blue", 
+                                  fill="white", 
+                                  fontsize=8, cex.axis=1, col="blue")
+}
+
+for (idx in 3:4) {
+  s <- samples[idx]
+  # set alignment track for sample1_G2 and sample2_G2 (with GREEN color)
+  alTrack[[s]] <- AlignmentsTrack(PE_bam_files[idx], 
+                                  isPaired = TRUE, 
+                                  fill.coverage="green", 
+                                  col.sashimi="green", 
+                                  fill="white", 
+                                  fontsize=8, cex.axis=1, col="green")
+}
+
+message("Load transcript annotation track ...")
+# Visit https://genome.ucsc.edu/cgi-bin/hgTables for more information of genome of interest
+# Here we use the latest version of human genome to visualise
+knownGenes <- UcscTrack(genome = "hg38", chromosome = chr, 
+                        track = "All GENCODE V48", table="wgEncodeGencodeCompV48", # use UCSC comprehensive genome annotation of Gencode hg38 release 48
+                        from = g_from, to = g_to, # Specify start/end position of gene region of interest
+                        trackType = "GeneRegionTrack", 
+                        rstarts = "exonStarts", rends = "exonEnds", 
+                        gene = "name", symbol = "name", 
+                        transcript = "name", strand = "strand", 
+                        fill = "black", name = "ALL GENCODE V48", col="black")
+
+message("Load genome axis track ...")
+idxTrack <- IdeogramTrack(genome="hg38", chromosome=chr)
+axTrack <- GenomeAxisTrack()
+
+message("Combine all tracks ...")
+plotTracks(c(idxTrack, axTrack, knownGenes, alTrack),
+            from = z_from, to = z_to, # Specify start and end region to zoom in
+            chromosome = chr, type = c("coverage", "sashimi"),
+            sashimiNumbers=TRUE,
+            showTitle = FALSE,
+            # sashimiScore=9, # optionally, set sashimiScore to reduce some unncessary junctions to be visualised
+            lwd.sashimiMax=2,
+            sizes = c(0.1,0.2,0.3,rep(0.3, 4)), # To adjust sizes of each panel
+            lwd.title=2,
+            lwd.border.title=4,
+            background.title="white",
+            col.axis="black",
+            fontcolor="black",
+            col.line="black")
 ```
