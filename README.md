@@ -2,9 +2,15 @@
 
 This is the repository for the code used to perform analysis and generate figures for the following paper titled "Incorporating exon-exon junction reads enhances differential splicing detection". 
 
+### Citation
+
+If you are using code or pipelines from this repository, please consider citing our associated article:
+
+Pham, M.T., Milevskiy, M.J.G., Visvader, J.E. et al. Incorporating exon–exon junction reads enhances differential splicing detection. BMC Bioinformatics 26, 193 (2025). [https://doi.org/10.1186/s12859-025-06210-4](https://doi.org/10.1186/s12859-025-06210-4)
+
 ### Introduction
 
-The paper introduced a DEJU analysis workflow implementing a STAR-Rsubread-edgeR-limma framework to identify DEU genes indicative of differential splicing between experimental conditions in RNA-seq data. Here is a schematic presentation of our proposed DEJU workflow.
+The paper introduced a DEJU analysis workflow implementing a **STAR-Rsubread-edgeR-limma framework** to identify DEU genes indicative of differential splicing between experimental conditions in RNA-seq data. Here is a schematic presentation of our proposed DEJU workflow.
 
 <p align="center">
   <img src="figures/fig_1_v2.png" alt="DEJU_workflow" width="400"/>
@@ -14,14 +20,8 @@ The paper also benchmarked the DEJU analysis methods implemented in edgeR and li
 
 ### Results and conclusion
 
-By incorporating exon-exon junction reads, our DEJU methods demonstrates higher performance over other benchmarked methods in FDR control, statistical power, computational efficiency (turnaround time + memory usage), and flexibility in detecting a broad range of AS events, notably alternative splice sites and intron retention, making it the most suitable candidate for DEJU analysis in RNA-seq data.
-In practical applications, our DEJU method effectively handles splicing alterations involving multiple known and novel transcripts, while supporting complex experimental designs. However, it is not recommended for non-model organisms with the incomplete reference genome and does not provide transcript-level abundance estimates.
-
-### Citation
-
-If you are using code or pipelines from this repository, please consider citing our associated article:
-
-Pham, M.T., Milevskiy, M.J.G., Visvader, J.E. et al. Incorporating exon–exon junction reads enhances differential splicing detection. BMC Bioinformatics 26, 193 (2025). [https://doi.org/10.1186/s12859-025-06210-4](https://doi.org/10.1186/s12859-025-06210-4)
+By incorporating exon-exon junction reads, our DEJU methods demonstrates higher performance over other benchmarked methods in FDR control, statistical power, computational efficiency (turn-around time + memory usage), and flexibility in detecting a broad range of AS events, notably alternative splice sites and intron retention, making it the most suitable candidate for DEJU analysis in RNA-seq data.
+In practical applications, our DEJU method effectively handles splicing alterations involving multiple known and novel transcripts, while supporting complex experimental designs. The effectiveness of the DEJU approach increases with sample size, making it particularly advantageous in large-scale studies (e.g. TCGA). However, it is not recommended for non-model organisms with the incomplete reference genome and does not provide transcript-level abundance estimates.
 
 ### Repository Structure
 
@@ -54,7 +54,7 @@ More replicates we have, higher sensitivity and specificity we get for the diffe
 #### 0. Reference genome
 
 First, we download genomic annotation `hg38.genome.gtf` and genomic sequence `hg38.genome.fasta` of the reference genome (e.g., from Gencode, UCSC database).\
-$$Note:$$ In this tutorial, we use genomic human annotation hg38 from the Gencode database.\
+**Note:** In this tutorial, we use genomic human annotation hg38 from the Gencode database.\
 We can download latest version of FASTA and GTF of hg38 from [Gencode](https://www.gencodegenes.org/human/).\
 To generate flattened and merged exon annotation, please visit [GTF2SAF.R](code/annotation_dl/GTF2SAF.R) for more details.\
 To generate junction database, please visit [GTF2SJdatabase.R](code/annotation_dl/GTF2SJdatabase.R) for more details.
@@ -63,6 +63,11 @@ To generate junction database, please visit [GTF2SJdatabase.R](code/annotation_d
 **Output:** `hg38.flat_exon.saf`, `hg38.SJdatabase.tsv`
 
 ```bash
+# Install Rsubread if not yet installed
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("Rsubread")
+
 library(Rsubread)
 
 # convert GTF to SAF
@@ -113,9 +118,12 @@ write.table(SJ.1, "hg38.SJdatabase.tsv", quote=F, row.names=F, sep="\t")
 ```
 #### 1. Per-sample FASTQ pre-processing and exon-junction read mapping with 2-pass mode (STAR)
 
-**Input:** `hg38.genome.gtf`, `hg38.genome.fasta`, `sample1_G1_R1.fastq.gz`, `sample1_G1_R2.fastq.gz`, `sample2_G1_R1.fastq.gz`,  `sample2_G1_R2.fastq.gz`, `sample1_G2_R1.fastq.gz`, `sample1_G2_R2.fastq.gz`, `sample2_G2_R1.fastq.gz`, `sample2_G2_R2.fastq.gz`
+**Input:** `hg38.genome.gtf`, `hg38.genome.fasta`,\
+`sample1_G1_R1.fastq.gz`, `sample1_G1_R2.fastq.gz`, `sample2_G1_R1.fastq.gz`,  `sample2_G1_R2.fastq.gz`, `sample1_G2_R1.fastq.gz`, `sample1_G2_R2.fastq.gz`, `sample2_G2_R1.fastq.gz`, `sample2_G2_R2.fastq.gz` inside `raw` folder
 
-**Output:** `sample1_G1.bam`, `sample2_G1.bam`, `sample1_G2.bam`, `sample2_G2.bam`
+**Final Output:**\
+`sample1_G1_R1.fastq.gz`, `sample1_G1_R2.fastq.gz`, `sample2_G1_R1.fastq.gz`,  `sample2_G1_R2.fastq.gz`, `sample1_G2_R1.fastq.gz`, `sample1_G2_R2.fastq.gz`, `sample2_G2_R1.fastq.gz`, `sample2_G2_R2.fastq.gz` inside `trimmed` folder
+`sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam` inside `aligned_pass2` folder
 
 We recommend run STAR with 2-pass mapping with re-generated genome + manual SJ filtering process like below to get the high mapping quality of exon-exon junction reads.
 Otherwise, we can freely do mapping with any splice-aware aligners, e.g. STAR, HISAT2, Rsubread::subjuc
@@ -123,17 +131,23 @@ Otherwise, we can freely do mapping with any splice-aware aligners, e.g. STAR, H
 An example of STAR with 2-pass mapping mode, followed by FASTQC/trim_galore used in this study is descibed below. For more details, please visit [`code/alignment/`](code/alignment/).
 
 ```bash
-# For example, two FASTQ files of paired end reads of sample1_G1 are stored in $raw$ folder with the name "sample1_G1_R1.fastq.gz" and "sample1_G1_R2.fastq.gz"
+# Install FASTQC, trim_galore, STAR if not yet installed
+
+# For example, two FASTQ files of paired end reads of sample1_G1 are stored in raw folder with the name "sample1_G1_R1.fastq.gz" and "sample1_G1_R2.fastq.gz"
 # R1 and R2 stands for forward and reverse FASTQ reads, respectively
-# Run FASTQC + trim reads and adapters (if has not been trimmed)
+
+# Step 1: Run FASTQC + trim reads and adapters (if has not been trimmed)
+
 fastqc --nogroup -t 16 --dir raw -o raw raw/sample1_G1_R1.fastq.gz raw/sample1_G1_R2.fastq.gz
+
 trim_galore --cores 4 -q 30 --length 20 --paired --fastqc_args "--nogroup" --output_dir trimmed raw/sample1_G1_R1.fastq.gz raw/sample1_G1_R2.fastq.gz
+
 # Then, we can rename trimmed fastq files (often with "*_val_*.fq.gz") into "sample1_G1_R1.fastq.gz" and "sample1_G1_R2.fastq.gz" (if paired-end reads)
 # for example, run this:
 for i in `find trimmed -name "*_val_*.fq.gz"`; do mv "$i" "${i/_val_?.fq.gz/.fastq.gz}"; done
 # Then trimmed FASTQ files will be stored in trimmed folder with the name "sample1_G1_R1.fastq.gz" and "sample1_G1_R2.fastq.gz"
 
-# Index the reference human genome (e.g. hg38)
+# Index the reference human genome (e.g. hg38) if not yet indexed
 # Note: Only run once for 1 reference genome
 sjdbOverhang=99 # optimal SJ overhang if max read length is 100
 mkdir hg38_idx_genome
@@ -144,7 +158,7 @@ STAR --runThreadN 16 \
           --sjdbGTFfile hg38.genome.gtf \           
           --sjdbOverhang $sjdbOverhang
 
-# Per-sample 1-pass mapping
+# Step 2: Per-sample 1st-mapping pass
 mkdir aligned_pass1
 STAR --genomeDir $genomeDir \
                 --readFilesIn trimmed/sample1_G1_R1.fastq.gz trimmed/sample1_G1_R2.fastq.gz \
@@ -153,14 +167,14 @@ STAR --genomeDir $genomeDir \
                 --outSAMtype BAM SortedByCoordinate \
                 --runThreadN 16
 
-# After running alignment for 4 samples, then
+# Step 3: After running alignment for 4 samples, then
 # SJ filtering for 4 samples (Manually filtering junctions  supported by less than 3 UMRs to reduce false positive junctions)
 mkdir SJ
 cp aligned_pass1/*/*SJ.out.tab SJ
 cat $DIR/SJ/*.SJ.out.tab | \
   awk '($7 >= 3 && $5 > 0)'| cut -f1-6| sort| uniq > SJ/merged_UMR_3.SJ.tab
 
-# Genome re-indexing with the filtered set of SJ
+# Step 4: Genome re-indexing with the filtered set of SJ
 # Note: Run for all samples across group comparisons
 mkdir reindexed_genome
 STAR --runThreadN 16 \
@@ -170,7 +184,7 @@ STAR --runThreadN 16 \
             --sjdbOverhang $sjdbOverhang \
             --sjdbFileChrStartEnd SJ/merged_UMR_3.SJ.tab
 
-# per-sample 2-pass mapping
+# Step 5: per-sample 2nd-mapping pass
 STAR --genomeDir reindexed_genome \
                     --readFilesIn trimmed/sample1_G1_R1.fastq.gz trimmed/sample1_G1_R2.fastq.gz \
                     --readFilesCommand zcat \
@@ -180,7 +194,7 @@ STAR --genomeDir reindexed_genome \
                     --outFilterIntronMotifs RemoveNoncanonical \
                     --runThreadN 16
 
-# At the end, we have BAM file for each sample after 2-mapping pass
+# At the end, we have one BAM file for each sample after 2nd-mapping pass
 ```
 
 #### 2. Exon-junction read quantification (Rsubread featureCounts)
@@ -190,6 +204,11 @@ STAR --genomeDir reindexed_genome \
 `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
 
 ```r
+# Install Rsubread if not yet installed
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("Rsubread")
+
 library(Rsubread)
 BAM_files <- list(sample1_G1.Aligned.sortedByCoord.out.bam,
                   sample2_G1.Aligned.sortedByCoord.out.bam,
@@ -271,8 +290,33 @@ ENSMUSG00000000001.5  chr3  108016632  108019251  -  1  Junction  0
 
 **Input:** `IE_J_count` (exon-junction counts), `IE_J_annot` (exon-junction annotation), `group` (group names), `contr` (contrast matrix), `design` (design matrix)
 
+First, manually create a tab-separated TSV file `target.tsv` that contains sampleID and groups of samples information like below:
+
+|sampleID|group|
+|----|----|
+|sample1_G1|G1|
+|sample2_G1|G1|
+|sample1_G2|G2|
+|sample2_G2|G2|
+
 ```r
+# Install edgeR if not yet installed
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("edgeR")
+
 library(edgeR)
+
+message("Specify groups of samples and build model/contrast matrix for differential analysis ...")
+target <- read.table("target.tsv", sep="\t", header=TRUE, stringsAsFactors=FALSE)
+group <- factor(target$group)
+samples <- target$sampleID
+
+design <- model.matrix(~ 0 + group)
+colnames(design) <- gsub("group", "", colnames(design))
+
+p <- "G2-G1" # specify groups to be compared (in this case, G1 is the reference group)
+contr <- makeContrasts(p, levels=design)
 
 message("Constructing DGElist object ...")  
 y <- DGEList(counts=IE_J_count, genes=IE_J_annot, group=group)
@@ -363,7 +407,7 @@ topSpliceDGE(sp, test="exon")
 `P.value`: p-value of exon-level test\
 `FDR`: False discovery rate
 
-#### 3. Visualisation of significant gene with differential splicing (DS gene)
+#### 4. Visualisation of significant gene with differential splicing (DS gene)
 
 Here we provide an example of how DS gene can be visualised.
 
@@ -371,30 +415,27 @@ Here we provide an example of how DS gene can be visualised.
   <img src="figures/FGFR1_DS_gene.png" alt="FGFR1 DS gene" width="400"/>
 </p>
 
-
-Please download the R script below:
+**To draw the upper panel of DEJU-edgeR**
 
 ```bash
+# Please download the R script below:
+
 # If run DEJU-edgeR
 wget https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/analysis/plotJunc3_diffSpliceDGE.R
 
-# If run DEJU-limma
-wget https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/analysis/plotJunc3.R
-```
-
-To draw the upper panel of DEJU-edgeR
-
-```R
-# If run DEJU-edgeR
 source("plotJunc3_diffSpliceDGE.R")
 plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
 
-# If run DEJU-limma
-source("plotJunc3.R")
-plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
+## If run DEJU-limma
+# wget https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/analysis/plotJunc3.R
+
+# source("plotJunc3.R")
+# plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
 ```
 
-To draw Sashimi plot (bottom panel), first generate annotation file of gene regions and indexed BAM files if not yet
+**To draw Sashimi plot (bottom panel)**
+
+- **Step 1: generate annotation file of gene regions and indexed BAM files if not yet**
 
 **Input:** `hg38.genome.gtf`, `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
 **Output:** `hg38.genome.genes.bed`, `sample1_G1.Aligned.sortedByCoord.out.bam.bai`, `sample2_G1.Aligned.sortedByCoord.out.bam.bai`, `sample1_G2.Aligned.sortedByCoord.out.bam.bai`, `sample2_G2.Aligned.sortedByCoord.out.bam.bai`
@@ -417,7 +458,9 @@ for SAMPLE in sample1_G1 sample2_G1 sample1_G2 sample2_G2; do
 done
 ```
 
-Second, generate BAM files that contain gene regions of interest. For more examples, please visit [code/analysis/make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
+- **Step 2: Generate BAM files that contain gene regions of interest**
+
+For more examples, please visit [code/analysis/make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
 
 **Input:** `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
 **Output:** `sample1_G1.Fgfr1.bam`, `sample2_G1.Fgfr1.bam`, `sample1_G2.Fgfr1.bam`, `sample2_G2.Fgfr1.bam` and their index `.bam.bai` files
@@ -444,11 +487,12 @@ for SAMPLE in sample1_G1 sample2_G1 sample1_G2 sample2_G2; do
 done
 ```
 
-Lastly, generate Sashimi plots using Gviz for a neat and nice plot\
-(Please refer to [Gviz documentation](https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html) for more details.)
+- **Step 3: Generate Sashimi plots using Gviz for a neat and nice plot**
+
+Please refer to [Gviz documentation](https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html) for more details.)
 Or, we can also visualise Sashimi plot using IGV.
 
-We can also visit [code/analysis/main_figs_codes.R - section Figure 4B](https://github.com/TamPham271299/DEJU/blob/main/code/analysis/main_figs_codes.R#L413-L506) or [code/analysis/supp_figs_codes.R - section Figure S9]([code/analysis/supp_figs_codes.R](https://github.com/TamPham271299/DEJU/blob/main/code/analysis/supp_figs_codes.R#L1155-L1518)) (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
+We can also visit [code/analysis/main_figs_codes.R - section Figure 4B](https://github.com/TamPham271299/DEJU/blob/main/code/analysis/main_figs_codes.R#L413-L506) or [code/analysis/supp_figs_codes.R - section Figure S9]([code/analysis/supp_figs_codes.R](https://github.com/TamPham271299/DEJU/blob/main/code/analysis/supp_figs_codes.R#L1155-L1518)) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
 
 ```R
 # Install Gviz if not yet installed
