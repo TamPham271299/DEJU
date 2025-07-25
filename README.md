@@ -55,9 +55,9 @@ More replicates we have, higher sensitivity and specificity we get for the diffe
 
 First, we download genomic annotation `hg38.genome.gtf` and genomic sequence `hg38.genome.fasta` of the reference genome (e.g., from Gencode, UCSC database).\
 $$Note:$$ In this tutorial, we use genomic human annotation hg38 from the Gencode database.\
-We can download latest version of FASTA and GTF of hg38 from [https://www.gencodegenes.org/human/](https://www.gencodegenes.org/human/).\
-To generate flattened and merged exon annotation, please visit `DEJU/code/annotation_dl/GTF2SAF.R` for more details.\
-To generate junction database, please visit `DEJU/code/annotation_dl/GTF2SJdatabase.R` for more details.
+We can download latest version of FASTA and GTF of hg38 from [Gencode](https://www.gencodegenes.org/human/).\
+To generate flattened and merged exon annotation, please visit [GTF2SAF.R](code/annotation_dl/GTF2SAF.R) for more details.\
+To generate junction database, please visit [GTF2SJdatabase.R](code/annotation_dl/GTF2SJdatabase.R) for more details.
 
 **Input:** `hg38.genome.gtf`, `hg38.genome.fasta`
 **Output:** `hg38.flat_exon.saf`, `hg38.SJdatabase.tsv`
@@ -385,7 +385,12 @@ wget https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/a
 To draw the upper panel of DEJU-edgeR
 
 ```R
+# If run DEJU-edgeR
 source("plotJunc3_diffSpliceDGE.R")
+plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
+
+# If run DEJU-limma
+source("plotJunc3.R")
 plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
 ```
 
@@ -412,7 +417,7 @@ for SAMPLE in sample1_G1 sample2_G1 sample1_G2 sample2_G2; do
 done
 ```
 
-Second, generate BAM files that contain gene regions of interest. For more examples, please visit [code/analysis/make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
+Second, generate BAM files that contain gene regions of interest. For more examples, please visit [make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
 
 ```bash
 # Specify DS gene to visualise and set the upstream/downstream distance (in base pairs) to include before the gene’s start coordinate and after its end coordinate.
@@ -437,10 +442,10 @@ done
 ```
 
 Lastly, generate Sashimi plots using Gviz for a neat and nice plot\
-(Please refer to [https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html](https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html) for more details.)
+(Please refer to [Gviz documentation](https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html) for more details.)
 Or, we can also visualise Sashimi plot using IGV.
 
-We can also visit [code/analysis/main_figs_codes.R](code/analysis/main_figs_codes.R) (section figure 4B) or [code/analysis/supp_figs_codes.R](code/analysis/supp_figs_codes.R) (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
+We can also visit [main_figs_codes.R - section Figure 4B](https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/analysis/main_figs_codes.R#L413-L506) or [code/analysis/supp_figs_codes.R](code/analysis/supp_figs_codes.R) (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
 
 ```R
 library(Gviz)
