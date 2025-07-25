@@ -118,6 +118,9 @@ write.table(SJ.1, "hg38.SJdatabase.tsv", quote=F, row.names=F, sep="\t")
 **Output:** `sample1_G1.bam`, `sample2_G1.bam`, `sample1_G2.bam`, `sample2_G2.bam`
 
 We recommend run STAR with 2-pass mapping with re-generated genome + manual SJ filtering process like below to get the high mapping quality of exon-exon junction reads.
+Otherwise, we can freely do mapping with any splice-aware aligners, e.g. STAR, HISAT2, Rsubread::subjuc
+
+An example of STAR with 2-pass mapping mode, followed by FASTQC/trim_galore used in this study is descibed below. For more details, please visit [`code/alignment/`](code/alignment/).
 
 ```bash
 # For example, two FASTQ files of paired end reads of sample1_G1 are stored in $raw$ folder with the name "sample1_G1_R1.fastq.gz" and "sample1_G1_R2.fastq.gz"
@@ -179,8 +182,6 @@ STAR --genomeDir reindexed_genome \
 
 # At the end, we have BAM file for each sample after 2-mapping pass
 ```
-
-Please visit `DEJU/code/alignment/` for more details.
 
 #### 2. Exon-junction read quantification (Rsubread featureCounts)
 
@@ -411,7 +412,7 @@ for SAMPLE in sample1_G1 sample2_G1 sample1_G2 sample2_G2; do
 done
 ```
 
-Second, generate BAM files that contain gene regions of interest.
+Second, generate BAM files that contain gene regions of interest. For more examples, please visit [code/analysis/make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
 
 ```bash
 # Specify DS gene to visualise and set the upstream/downstream distance (in base pairs) to include before the gene’s start coordinate and after its end coordinate.
@@ -439,7 +440,7 @@ Lastly, generate Sashimi plots using Gviz for a neat and nice plot\
 (Please refer to [https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html](https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html) for more details.)
 Or, we can also visualise Sashimi plot using IGV.
 
-We can also visit `DEJU/code/analysis/main_figs_codes.R` (section figure 4B) or `DEJU/code/analysis/supp_figs_codes.R` (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
+We can also visit [code/analysis/main_figs_codes.R](code/analysis/main_figs_codes.R) (section figure 4B) or [code/analysis/supp_figs_codes.R](code/analysis/supp_figs_codes.R) (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
 
 ```R
 library(Gviz)
