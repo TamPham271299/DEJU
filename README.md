@@ -272,7 +272,11 @@ IE_J_annot <- rbind(IE_annot, J_annot)
 
 An example of R object outputs:
 
-`IE_J_count` contains counts of each feature (exon/junction) with each column representing each sample.
+`IE_J_count` contains counts of each feature (exon/junction) in the `IE_J_annot` object with each column representing the corresponding sample (e.g, sample1_G1, sample2_G1, sample1_G1, sample2_G2).\
+**Important note:**\
+SampleID will do not appear in this object. But, we will know which column belongs to which sample based on the order of BAM files loaded in previous step (The order of samples will be the same as the order of BAM files).\
+The row number in `IE_J_count` corresponds to the same row number in `IE_J_annot` object. So, the number of rows in 2 objects are always the same (tells us how many features (exons and junctions) we have.
+
 ```tsv
 7587  5384  6408  6617
 732  567  731  709
@@ -284,6 +288,7 @@ An example of R object outputs:
 
 `IE_J_annot` contains 8 columns: GeneID, Chr, Start, End, Strand, Length, Region, Annotated, which provides genomic information for each feature above.
 ```tsv
+GeneID  Chr  Start  End  Strand  Length  Region  Annotated
 ENSMUSG00000000001.5  chr3  108014596  108016632  -  2037  Exon  1
 ENSMUSG00000000001.5  chr3  108016719  108016928  -  210  Exon  1
 ENSMUSG00000000001.5  chr3  108019251  108019404  -  154  Exon  1
@@ -291,6 +296,13 @@ ENSMUSG00000000001.5  chr3  108016623  108016719  -  1  Junction  0
 ENSMUSG00000000001.5  chr3  108016632  108016719  -  1  Junction  1
 ENSMUSG00000000001.5  chr3  108016632  108019251  -  1  Junction  0
 ```
+
+**Field descriptions:**
+
+`GeneID`, `Chr`, `Strand`: Gene details\
+`Region`: if the feature is exon or junction\
+`Start`, `End`, `Length`: Start, end position and length of the feature (if feature is junction, length is set to 1)\
+`Annotated`: if the feature is annotated or novel (0 means 'novel')
 
 #### 3. Differential exon-junction usage (edgeR diffSpliceDGE)
 
@@ -409,7 +421,7 @@ topSpliceDGE(sp, test="exon")
 `GeneID`, `Chr`, `Strand`, `Symbol`: Gene details\
 `Region`: Whether the region is junction or exon\
 `Start`, `End`: If region is exon, start/end coordinator of that exonic region; If region is junction, position of two splice sites of that junction\
-`annotated`: whether exon/junction is annotated or novel\
+`annotated`: whether exon/junction is annotated or novel (0 means 'novel')\
 `logFC`: log2 fold-change of one exon vs all the exons for the same gene\
 `exon.F`: F-statistics for exon/junction\
 `P.value`: p-value of exon-level test\
@@ -446,6 +458,7 @@ plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
 - **Step 1: generate annotation file of gene regions and indexed BAM files if not yet**
 
 **Input:** `hg38.genome.gtf`, `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam` in `aligned_pass2` folder
+
 **Output:** `hg38.genome.genes.bed`, `sample1_G1.Aligned.sortedByCoord.out.bam.bai`, `sample2_G1.Aligned.sortedByCoord.out.bam.bai`, `sample1_G2.Aligned.sortedByCoord.out.bam.bai`, `sample2_G2.Aligned.sortedByCoord.out.bam.bai` in `aligned_pass2` folder
 
 ```bash
@@ -471,6 +484,7 @@ done
 For more examples, please visit [code/analysis/make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
 
 **Input:** `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam` and their index `.bam.bai` files in `aligned_pass2` folder
+
 **Output:** `sample1_G1.Fgfr1.bam`, `sample2_G1.Fgfr1.bam`, `sample1_G2.Fgfr1.bam`, `sample2_G2.Fgfr1.bam` and their index `.bam.bai` files in `${gene}_${geneID}_${d}` folder (e.g. Fgfr1_ENSMUSG00000031565.19_1000 as an example)
 
 ```bash
