@@ -1155,6 +1155,15 @@ write.csv(libSize, paste0(fig, "table_S3.csv"), row.names=FALSE)
 ###### Codes to produce results in Figure S9 (edgeR::diffSpliceDGE)
 ################################################################################
 # setwd("/vast/projects/Spatial/tam/Differential_splicing/github/code/analysis/")
+# Install edgeR and Gviz if not yet installed
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(c("Gviz", "edgeR"))
+
+library(edgeR)
+library(Gviz)
+options(ucscChromosomeNames=FALSE)
+
 source("edgeR_diffSpliceDGE_simple.R")
 source("plotJunc3_diffSpliceDGE.R")
 
