@@ -56,8 +56,8 @@ More replicates we have, higher sensitivity and specificity we get for the diffe
 First, we download genomic annotation `hg38.genome.gtf` and genomic sequence `hg38.genome.fasta` of the reference genome (e.g., from Gencode, UCSC database).\
 **Note:** In this tutorial, we use genomic human annotation hg38 from the Gencode database.\
 We can download latest version of FASTA and GTF of hg38 from [Gencode](https://www.gencodegenes.org/human/).\
-To generate flattened and merged exon annotation, please visit [GTF2SAF.R](code/annotation_dl/GTF2SAF.R) for more details.\
-To generate junction database, please visit [GTF2SJdatabase.R](code/annotation_dl/GTF2SJdatabase.R) for more details.
+To generate flattened and merged exon annotation, please visit [code/annotation_dl/GTF2SAF.R](code/annotation_dl/GTF2SAF.R) for more details.\
+To generate junction database, please visit [code/annotation_dl/GTF2SJdatabase.R](code/annotation_dl/GTF2SJdatabase.R) for more details.
 
 **Input:** `hg38.genome.gtf`, `hg38.genome.fasta`
 **Output:** `hg38.flat_exon.saf`, `hg38.SJdatabase.tsv`
@@ -79,6 +79,12 @@ SAF <- flattenGTF("hg38.genome.gtf",
 write.table(SAF, "hg38.flat_exon.saf", quote=F, row.names=F, sep="\t")
 
 # Generate junction database for the reference hg38 genome
+# install the following packages if not yet installed
+install.packages("dplyr")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(c("rtracklayer", "GenomicRanges"))
+
 library(dplyr)
 library(rtracklayer)
 library(GenomicRanges)
@@ -199,9 +205,9 @@ STAR --genomeDir reindexed_genome \
 
 #### 2. Exon-junction read quantification (Rsubread featureCounts)
 
-**Input:** `hg38.flat_exon.saf` (Flattened and merged exon annotation), `hg38.SJdatabase.tsv` (Junction database),\
-`sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`,\
-`sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
+**Input:**\
+`hg38.flat_exon.saf` (Flattened and merged exon annotation), `hg38.SJdatabase.tsv` (Junction database),\
+`sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam` in `aligned_pass2` folder
 
 ```r
 # Install Rsubread if not yet installed
@@ -210,14 +216,14 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("Rsubread")
 
 library(Rsubread)
-BAM_files <- list(sample1_G1.Aligned.sortedByCoord.out.bam,
-                  sample2_G1.Aligned.sortedByCoord.out.bam,
-                  sample1_G2.Aligned.sortedByCoord.out.bam,
-                  sample2_G2.Aligned.sortedByCoord.out.bam)
+BAM_files <- list("aligned_pass2/sample1_G1.Aligned.sortedByCoord.out.bam",
+                  "aligned_pass2/sample2_G1.Aligned.sortedByCoord.out.bam",
+                  "aligned_pass2/sample1_G2.Aligned.sortedByCoord.out.bam",
+                  "aligned_pass2/sample2_G2.Aligned.sortedByCoord.out.bam")
 
 message('Quantify internal exon + exon-exon junction reads ...')
-count <- Rsubread::featureCounts(BAM_files, # input BAM files from STAR aligner
-                                  annot.ext="hg38.flat_exon.saf", # merged and flattened exon annotation
+count <- Rsubread::featureCounts(BAM_files, # a list of input BAM files
+                                  annot.ext="hg38.flat_exon.saf", # specify relative path to merged and flattened exon annotation file previously generated
                                   useMetaFeatures=FALSE, # summarize exon-level reads
                                   nonSplitOnly=TRUE, splitOnly=FALSE, # quantify internal exon reads
                                   juncCounts=TRUE # quantify exon-exon junction reads
@@ -235,7 +241,7 @@ J_count$juncID <- paste(J_count$Site1_chr,
                         sep="_")
 
 message('Junction reannotation using junction database ...')
-SJ_database <- read.table("hg38.SJdatabase.tsv", header=T)
+SJ_database <- read.table("hg38.SJdatabase.tsv", header=T) # Specify relative path to SJ database file previously created
 uniq_SJ <- SJ_database[SJ_database$freq==1,]
 m1 <- match(J_count$juncID, uniq_SJ$juncID)
 J_count$PrimaryGene <- ifelse(!is.na(m1), uniq_SJ$geneID[m1], J_count$PrimaryGene)
@@ -263,7 +269,7 @@ IE_J_annot <- rbind(IE_annot, J_annot)
 
 **Output:**
 
-Exon-junction count table and annotation is stored in `IE_J_count` and `IE_J_annot` object.
+Exon-junction count table and annotation is stored in `IE_J_count` and `IE_J_annot` R objects.
 
 For example:\
 `IE_J_count` contains counts of each feature (exon/junction) with each column representing each sample.
@@ -288,7 +294,7 @@ ENSMUSG00000000001.5  chr3  108016632  108019251  -  1  Junction  0
 
 #### 3. Differential exon-junction usage (edgeR diffSpliceDGE)
 
-**Input:** `IE_J_count` (exon-junction counts), `IE_J_annot` (exon-junction annotation), `group` (group names), `contr` (contrast matrix), `design` (design matrix)
+**Input:** `IE_J_count` (exon-junction counts), `IE_J_annot` (exon-junction annotation), `group` (group names), `contr` (contrast matrix), `design` (design matrix) R objects
 
 First, manually create a tab-separated TSV file `target.tsv` that contains sampleID and groups of samples information like below:
 
@@ -437,8 +443,8 @@ plotJunc(sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
 
 - **Step 1: generate annotation file of gene regions and indexed BAM files if not yet**
 
-**Input:** `hg38.genome.gtf`, `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
-**Output:** `hg38.genome.genes.bed`, `sample1_G1.Aligned.sortedByCoord.out.bam.bai`, `sample2_G1.Aligned.sortedByCoord.out.bam.bai`, `sample1_G2.Aligned.sortedByCoord.out.bam.bai`, `sample2_G2.Aligned.sortedByCoord.out.bam.bai`
+**Input:** `hg38.genome.gtf`, `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam` in `aligned_pass2` folder
+**Output:** `hg38.genome.genes.bed`, `sample1_G1.Aligned.sortedByCoord.out.bam.bai`, `sample2_G1.Aligned.sortedByCoord.out.bam.bai`, `sample1_G2.Aligned.sortedByCoord.out.bam.bai`, `sample2_G2.Aligned.sortedByCoord.out.bam.bai` in `aligned_pass2` folder
 
 ```bash
 # Prepare gene coordinates from GTF file (have to be downloaded from Gencode to run this code successfully)
@@ -462,8 +468,8 @@ done
 
 For more examples, please visit [code/analysis/make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
 
-**Input:** `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
-**Output:** `sample1_G1.Fgfr1.bam`, `sample2_G1.Fgfr1.bam`, `sample1_G2.Fgfr1.bam`, `sample2_G2.Fgfr1.bam` and their index `.bam.bai` files
+**Input:** `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam` and their index `.bam.bai` files in `aligned_pass2` folder
+**Output:** `sample1_G1.Fgfr1.bam`, `sample2_G1.Fgfr1.bam`, `sample1_G2.Fgfr1.bam`, `sample2_G2.Fgfr1.bam` and their index `.bam.bai` files in `${gene}_${geneID}_${d}` folder (e.g. Fgfr1_ENSMUSG00000031565.19_1000 as an example)
 
 ```bash
 # Specify DS gene to visualise and set the upstream/downstream distance (in base pairs) to include before the gene’s start coordinate and after its end coordinate.
@@ -503,7 +509,7 @@ BiocManager::install("Gviz")
 library(Gviz)
 options(ucscChromosomeNames=FALSE)
 
-# Load gene information
+message("Specify gene position and DS region to be zoomed in ...")
 # Below is an example to visualise Fgfr1 gene as a DS gene of 2 groups (mouse LP and ML cell types)
 geneSymbol <- "Fgfr1"
 geneID <- "ENSMUSG00000031565.19"
@@ -514,12 +520,12 @@ z_from <- 26052007 # first coordinate of region to zoom in
 z_to <- 26059369 # last coordinate of region to zoom in
 d <- 1000 # Upstream/Downstream distance to the first/last coordinate of the gene
 
-# Load alignmnent track from bam files
+message("Load alignmnent track from bam files ...")
 samples <- c("sample1_G1", "sample2_G1", "sample1_G2", "sample2_G2")
-OUTPUT <- paste0("geneSymbol, "_", geneID, "_", d, "/")
+OUTPUT <- paste0(geneSymbol, "_", geneID, "_", d, "/")
 PE_bam_files <- paste0(OUTPUT, samples, ".", geneSymbol, ".bam")
 
-# Start an alTrack list to store alignment tracks of 4 samples
+message("Start an alTrack list to store alignment tracks of 4 samples ...")
 alTrack <- list()
 
 for (idx in 1:2) {
