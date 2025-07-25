@@ -60,6 +60,7 @@ To generate flattened and merged exon annotation, please visit [code/annotation_
 To generate junction database, please visit [code/annotation_dl/GTF2SJdatabase.R](code/annotation_dl/GTF2SJdatabase.R) for more details.
 
 **Input:** `hg38.genome.gtf`, `hg38.genome.fasta`
+
 **Output:** `hg38.flat_exon.saf`, `hg38.SJdatabase.tsv`
 
 ```bash
@@ -209,6 +210,8 @@ STAR --genomeDir reindexed_genome \
 `hg38.flat_exon.saf` (Flattened and merged exon annotation), `hg38.SJdatabase.tsv` (Junction database),\
 `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam` in `aligned_pass2` folder
 
+**Output:** Exon-junction count table and annotation is stored in `IE_J_count` and `IE_J_annot` R objects.
+
 ```r
 # Install Rsubread if not yet installed
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -267,11 +270,8 @@ IE_J_count <- rbind(IE_count, J_count)
 IE_J_annot <- rbind(IE_annot, J_annot)
 ```
 
-**Output:**
+An example of R object outputs:
 
-Exon-junction count table and annotation is stored in `IE_J_count` and `IE_J_annot` R objects.
-
-For example:\
 `IE_J_count` contains counts of each feature (exon/junction) with each column representing each sample.
 ```tsv
 7587  5384  6408  6617
@@ -295,6 +295,8 @@ ENSMUSG00000000001.5  chr3  108016632  108019251  -  1  Junction  0
 #### 3. Differential exon-junction usage (edgeR diffSpliceDGE)
 
 **Input:** `IE_J_count` (exon-junction counts), `IE_J_annot` (exon-junction annotation), `group` (group names), `contr` (contrast matrix), `design` (design matrix) R objects
+
+**Output:** A list of differentially spliced genes by Simes/F-test and a list of differential exon and junction regions by exon test
 
 First, manually create a tab-separated TSV file `target.tsv` that contains sampleID and groups of samples information like below:
 
