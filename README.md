@@ -417,7 +417,10 @@ for SAMPLE in sample1_G1 sample2_G1 sample1_G2 sample2_G2; do
 done
 ```
 
-Second, generate BAM files that contain gene regions of interest. For more examples, please visit [make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
+Second, generate BAM files that contain gene regions of interest. For more examples, please visit [code/analysis/make_bam_for_visualization.sh](code/analysis/make_bam_for_visualization.sh)
+
+**Input:** `sample1_G1.Aligned.sortedByCoord.out.bam`, `sample2_G1.Aligned.sortedByCoord.out.bam`, `sample1_G2.Aligned.sortedByCoord.out.bam`, `sample2_G2.Aligned.sortedByCoord.out.bam`
+**Output:** `sample1_G1.Fgfr1.bam`, `sample2_G1.Fgfr1.bam`, `sample1_G2.Fgfr1.bam`, `sample2_G2.Fgfr1.bam` and their index `.bam.bai` files
 
 ```bash
 # Specify DS gene to visualise and set the upstream/downstream distance (in base pairs) to include before the gene’s start coordinate and after its end coordinate.
@@ -445,9 +448,14 @@ Lastly, generate Sashimi plots using Gviz for a neat and nice plot\
 (Please refer to [Gviz documentation](https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html) for more details.)
 Or, we can also visualise Sashimi plot using IGV.
 
-We can also visit [main_figs_codes.R - section Figure 4B](https://github.com/TamPham271299/DEJU/blob/main/code/analysis/main_figs_codes.R#L413-L506) or [code/analysis/supp_figs_codes.R](code/analysis/supp_figs_codes.R) (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
+We can also visit [code/analysis/main_figs_codes.R - section Figure 4B](https://github.com/TamPham271299/DEJU/blob/main/code/analysis/main_figs_codes.R#L413-L506) or [code/analysis/supp_figs_codes.R - section Figure S9]([code/analysis/supp_figs_codes.R](https://github.com/TamPham271299/DEJU/blob/main/code/analysis/supp_figs_codes.R#L1155-L1518)) (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
 
 ```R
+# Install Gviz if not yet installed
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("Gviz")
+
 library(Gviz)
 options(ucscChromosomeNames=FALSE)
 
