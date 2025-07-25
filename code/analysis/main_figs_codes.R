@@ -323,7 +323,6 @@ dev.off()
 ################################################################################
 setwd("/vast/projects/Spatial/tam/Differential_splicing/github/code/analysis/")
 source("edgeR_diffSpliceDGE_simple.R")
-source("plotJunc3_diffSpliceDGE.R")
 
 # DIR <- "/vast/projects/MM/tam/Differential_splicing/milevskiy_2023_GSE227748/"
 DIR <- "../../data/case_study/GSE227748/"
@@ -410,7 +409,9 @@ pdf(paste0(fig, "fig_4A.pdf"), height = 5, width = 2.5)
 grid.arrange(v_simes, v_F, nrow=2, ncol=1)
 dev.off()
 
-# Fgfr1 gene
+### Figure 4B (Fgfr1 DS gene visualisation)
+source("plotJunc3_diffSpliceDGE.R")
+
 g <- "Fgfr1"
 message(paste0("Make plotJunc plot for ", g, " ..."))
 pdf(paste0(fig, "fig_4B_1.", g, ".pdf"), height = 8.5, width = 8.5)
@@ -420,6 +421,9 @@ plotJunc(DEJU$sp, geneid=g, genecol="Symbol", annotation=IE_J$IE_annot)
 dev.off()
 
 message(paste0("Make sashimi plot for ", g, " ..."))
+library(Gviz)
+options(ucscChromosomeNames=FALSE)
+
 geneSymbol <- "Fgfr1"
 geneID <- "ENSMUSG00000031565.19"
 chr <- "chr8"
