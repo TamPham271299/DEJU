@@ -136,6 +136,7 @@ We recommend run STAR with 2-pass mapping with re-generated genome + manual SJ f
 Otherwise, we can freely do mapping with any splice-aware aligners, e.g. STAR, HISAT2, Rsubread::subjuc
 
 An example of STAR with 2-pass mapping mode, followed by FASTQC/trim_galore used in this study is descibed below. For more details, please visit [`code/alignment/`](code/alignment/).
+This mapping step is referred to [https://www.reneshbedre.com/blog/star-aligner-twopass-mode.html](https://www.reneshbedre.com/blog/star-aligner-twopass-mode.html) and [STAR documentation](https://physiology.med.cornell.edu/faculty/skrabanek/lab/angsd/lecture_notes/STARmanual.pdf)
 
 ```bash
 # Install FASTQC, trim_galore, STAR if not yet installed
