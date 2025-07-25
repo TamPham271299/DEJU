@@ -445,7 +445,7 @@ Lastly, generate Sashimi plots using Gviz for a neat and nice plot\
 (Please refer to [Gviz documentation](https://bioconductor.org/packages/devel/bioc/vignettes/Gviz/inst/doc/Gviz.html) for more details.)
 Or, we can also visualise Sashimi plot using IGV.
 
-We can also visit [main_figs_codes.R - section Figure 4B](https://raw.githubusercontent.com/TamPham271299/DEJU/refs/heads/main/code/analysis/main_figs_codes.R#L413-L506) or [code/analysis/supp_figs_codes.R](code/analysis/supp_figs_codes.R) (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
+We can also visit [main_figs_codes.R - section Figure 4B](https://github.com/TamPham271299/DEJU/blob/main/code/analysis/main_figs_codes.R#L413-L506) or [code/analysis/supp_figs_codes.R](code/analysis/supp_figs_codes.R) (section Figure S9) for more Sashimi junction plots (shown in the paper as Figure 4B and the supplementary document [12859_2025_6210_MOESM1_ESM.pdf](https://static-content.springer.com/esm/art%3A10.1186%2Fs12859-025-06210-4/MediaObjects/12859_2025_6210_MOESM1_ESM.pdf) as Figure S9).
 
 ```R
 library(Gviz)
